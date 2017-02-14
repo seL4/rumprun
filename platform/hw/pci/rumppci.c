@@ -37,6 +37,44 @@
 #define PCI_CONF_ADDR 0xcf8
 #define PCI_CONF_DATA 0xcfc
 
+
+int
+rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val) {
+	switch (io_size) {
+		case 1:
+			__asm__ __volatile__("outb %0, %1" :: "a"((uint8_t)val), "d"((uint16_t)port));
+		break;
+		case 2:
+			__asm__ __volatile__("out %0, %1" :: "a"((uint16_t)val), "d"((uint16_t)port));
+
+		break;
+		case 4:
+			__asm__ __volatile__("outl %0, %1" :: "a"((uint32_t)val), "d"((uint16_t)port));
+		break;
+	}
+	return 0;
+}
+
+int
+rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result) {
+	uint32_t res = 0;
+	switch (io_size){
+		case 1:
+			__asm__ __volatile__("inb %1, %0" : "=a"(res) : "d"((uint16_t)port));
+		break;
+		case 2:
+			__asm__ __volatile__("in %1, %0" : "=a"(res) : "d"((uint16_t)port));
+
+		break;
+		case 4:
+			__asm__ __volatile__("inl %1, %0" : "=a"(res) : "d"((uint16_t)port));
+		break;
+	}
+	*result = res;
+	return 0;
+}
+
+
 int
 rumpcomp_pci_iospace_init(void)
 {
@@ -111,4 +149,10 @@ rumpcomp_pci_map(unsigned long addr, unsigned long len)
 {
 
 	return (void *)addr;
+}
+
+void
+rumpcomp_pci_unmap(void *addr)
+{
+
 }
