@@ -38,7 +38,7 @@ helpme ()
 {
 
 	printf "Usage: $0 [-d destdir] [-j num] [-k] [-o objdir] [-q]\n"
-	printf "\t[-s srcdir] hw|xen [build] [install] [-- buildrump.sh opts]\n"
+	printf "\t[-s srcdir] hw|xen|sel4 [build] [install] [-- buildrump.sh opts]\n"
 	printf "\n"
 	printf "\t-d: destination base directory, used by \"install\".\n"
 	printf "\t-j: run <num> make jobs simultaneously.\n"

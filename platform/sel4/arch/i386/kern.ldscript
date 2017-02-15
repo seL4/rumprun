@@ -1,0 +1,100 @@
+/*
+ * Copyright 2017, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the BSD 2-Clause license. Note that NO WARRANTY is provided.
+ * See "LICENSE_BSD2.txt" for details.
+ *
+ * @TAG(DATA61_BSD)
+ */
+
+OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
+OUTPUT_ARCH(i386)
+ENTRY(_start)
+SECTIONS
+{
+	PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x08048000));
+	. = SEGMENT_START("text-segment", 0x08048000) + SIZEOF_HEADERS;
+	. = 1m;
+	_begin = . ;
+	.text :
+	AT (ADDR(.text) & 0x0fffffff)
+	{
+		*(.multiboot)
+		*(.text)
+		*(.text.*)
+		*(.stub)
+		*(.note*)
+	}
+	_etext = . ;
+
+	.rodata :
+	AT (LOADADDR(.text) + (ADDR(.rodata) - ADDR(.text)))
+	{
+		*(.rodata)
+		*(.rodata.*)
+	}
+
+	.initfini :
+	AT (LOADADDR(.text) + (ADDR(.initfini) - ADDR(.text)))
+	{
+		__init_array_start = . ;
+		*(SORT_BY_INIT_PRIORITY(.init_array.*))
+		*(SORT_BY_INIT_PRIORITY(.ctors*))
+		*(.init_array)
+		__init_array_end = . ;
+		__fini_array_start = . ;
+		*(SORT_BY_INIT_PRIORITY(.fini_array.*))
+		*(SORT_BY_INIT_PRIORITY(.dtors*))
+		*(.fini_array)
+		__fini_array_end = . ;
+		__init_array_start_sel4 = .;
+		*(SORT_BY_INIT_PRIORITY(.init_array_sel4.*))
+		__init_array_end_sel4 = .;
+	}
+
+	_data_start = .;
+	.data :
+	AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
+	{
+		*(.data)
+	}
+	_edata = . ;
+
+	.tdata :
+	AT (LOADADDR(.text) + (ADDR(.tdata) - ADDR(.text)))
+	{
+		_tdata_start = . ;
+		*(.tdata)
+		_tdata_end = . ;
+	}
+
+	.tbss :
+	AT (LOADADDR(.text) + (ADDR(.tbss) - ADDR(.text)))
+	{
+		_tbss_start = . ;
+		*(.tbss)
+		_tbss_end = . ;
+	}
+
+	__bss_start = . ;
+	.bss :
+	AT (LOADADDR(.text) + (ADDR(.bss) - ADDR(.text)))
+	{
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+		*(.bootstack)
+	}
+	.lbss :
+	AT (LOADADDR(.text) + (ADDR(.lbss) - ADDR(.text)))
+	{
+		*(.lbss)
+		*(.lbss.*)
+		*(LARGE_COMMON)
+	}
+	_end = . ;
+	PROVIDE (end = .) ;
+}

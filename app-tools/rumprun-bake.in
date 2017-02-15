@@ -128,7 +128,7 @@ version ()
 conf ()
 {
 
-	if ! echo ${1} | egrep -q '^(xen|hw)?_'; then
+	if ! echo ${1} | egrep -q '^(xen|hw|sel4)?_'; then
 		_die "conf: invalid \"$1\" (${CFGFILE})"
 	fi
 	CONF=$1
