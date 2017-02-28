@@ -41,6 +41,13 @@
 
 #include <bmk-core/platform.h>
 #include <bmk-core/printf.h>
+#include <bmk-core/sched.h>
+
+void
+bmk_platform_cpu_sched_settls(struct bmk_tcb *next)
+{
+    env.tls_base_ptr = (void *) next->btcb_tp;
+}
 
 
 /*

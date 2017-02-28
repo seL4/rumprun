@@ -15,6 +15,7 @@
 #ifndef _LOCORE
 
 #include <bmk-core/types.h>
+#include <autoconf.h>
 
 void cons_init(void);
 void cons_putc(int);

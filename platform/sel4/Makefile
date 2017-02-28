@@ -13,9 +13,23 @@ include ${BUILDRUMP_TOOLFLAGS}
 
 default: all
 
+# Check if we're building for a supported target.
+supported= false
 MACHINE?= i386
+ifeq (${MACHINE},i386)
+SEL4_MACHINE_ARCH=i386
+supported:= true
+endif
+ifeq (${MACHINE},amd64)
+supported:= true
+endif
+ifneq (${supported},true)
+$(error only supported target is x86, you have ${MACHINE})
+endif
+
 ARCHDIR?= ${MACHINE}
-SEL4_MACHINE_ARCH?= i386
+SEL4_MACHINE_ARCH?= ${MACHINE_GNU_ARCH}
+
 
 LDSCRIPT:=	$(abspath arch/${ARCHDIR}/kern.ldscript)
 SRCS+=		entry.c undefs.c kernel.c intr.c

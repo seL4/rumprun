@@ -25,8 +25,21 @@ ifeq ($(RUMPSTALE), 1)
 COOKFS_REBUILD := stale
 endif
 
+supported= false
+
+ifeq ($(SEL4_ARCH), ia32)
+supported:=true
+RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
+endif
+ifeq ($(SEL4_ARCH), x86_64)
+supported:=true
+endif
+ifneq (${supported},true)
+$(error only supported target is x86, ${SEL4_ARCH} is not supported)
+endif
+
 #Build for release and 32 bit.
-RUMPKERNEL_FLAGS+= -r -F ACLFLAGS=-m32
+RUMPKERNEL_FLAGS+= -r
 
 ifeq ($(RTARGET), sel4)
 #Change TLS model to avoid unnecessary seL4 invocations.
@@ -46,7 +59,7 @@ rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_B
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
 	cd $(SOURCE_DIR) && env -i PATH=${PATH2} PROJECT_BASE=$(PROJECT_BASE) CC=gcc ./build-rr.sh \
-	-d $(BUILD2_DIR)/rumprun2 -o $(BUILD2_DIR)/sel4-obj sel4 -- $(RUMPKERNEL_FLAGS)
+	-d $(BUILD2_DIR)/$(SEL4_ARCH)/rumprun -o $(BUILD2_DIR)/$(SEL4_ARCH)/sel4-obj sel4 -- $(RUMPKERNEL_FLAGS)
 	@echo " [rumprun] rebuilt rumprun sel4"
 	touch rumpsel4
 

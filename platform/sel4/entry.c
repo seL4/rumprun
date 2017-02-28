@@ -258,12 +258,16 @@ static void wait_for_pci_interrupt(void)
         so this thread is used before it actually handles PCI stuff */
     seL4_UserContext context;
     int res = seL4_TCB_ReadRegisters(env.init_data->tcb, 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
+    if (res) {
+        ZF_LOGF("Could not read registers");
+    }
     context.tls_base = (seL4_Word)&env.tls_base_ptr;
     /* When you call write registers on a thread, seL4 changes it to be restarted.
        Because the target thread is of a lower priority, its last instruction was an
        invocation that set the current thread to running. The eip needs to be incremented
        so that the target thread is resumed correctly instead of recalling the invocation. */
-    context.eip += 2;
+    seL4_Word pc = sel4utils_get_instruction_pointer(context);
+    sel4utils_set_instruction_pointer(&context, pc + ARCH_SYSCALL_INSTRUCTION_SIZE);
     res = seL4_TCB_WriteRegisters(env.init_data->tcb, 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
     if (res) {
         ZF_LOGF("Could not write registers");

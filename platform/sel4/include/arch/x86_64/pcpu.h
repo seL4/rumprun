@@ -10,19 +10,7 @@
  * @TAG(DATA61_BSD)
  */
 
-#include <bmk-core/types.h>
-#include <sel4/kernel.h>
-#include <sel4/sel4.h>
-#include <bmk-core/core.h>
-#include <bmk-core/sched.h>
-#include <bmk-core/printf.h>
-#include <sel4/helpers.h>
-#include <assert.h>
-#include <stdio.h>
+#pragma once
 
-
-void
-bmk_platform_cpu_sched_settls(struct bmk_tcb *next)
-{
-    env.tls_base_ptr = (void *) next->btcb_tp;
-}
+#define BMK_PCPU_PAGE_SHIFT 12UL
+#define BMK_PCPU_PAGE_SIZE (1<<BMK_PCPU_PAGE_SHIFT)
