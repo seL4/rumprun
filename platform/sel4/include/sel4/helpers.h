@@ -69,5 +69,3 @@ extern struct env env;
 void arch_init_simple(simple_t *simple);
 void x86_initclocks(void);
 
-/* timer */
-void wait_for_timer_interrupt(void);

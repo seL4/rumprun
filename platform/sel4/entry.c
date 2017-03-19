@@ -238,8 +238,8 @@ provide_vmem(env_t env)
     bmk_memsize = MY_VIRTUAL_MEMORY;
 }
 
-void
-wait_for_timer_interrupt(void)
+static void
+wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 {
 
     while (1) {
@@ -251,7 +251,7 @@ wait_for_timer_interrupt(void)
 }
 
 
-static void wait_for_pci_interrupt(void)
+static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 {
 
     /* Set up TLS for main thread.  The main thread can't do this itself
