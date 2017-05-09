@@ -32,7 +32,7 @@ SEL4_MACHINE_ARCH?= ${MACHINE_GNU_ARCH}
 
 
 LDSCRIPT:=	$(abspath stage2.lds)
-SRCS+=		entry.c undefs.c kernel.c intr.c
+SRCS+=		entry.c undefs.c kernel.c intr.c simple.c
 include ../Makefile.inc
 include arch/${ARCHDIR}/Makefile.inc
 

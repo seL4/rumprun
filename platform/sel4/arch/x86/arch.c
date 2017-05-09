@@ -49,6 +49,7 @@ get_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
     return error;
 }
 
+
 static seL4_Error
 get_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
         UNUSED seL4_Word pci_bus, UNUSED seL4_Word pci_dev, UNUSED seL4_Word pci_func,
@@ -60,6 +61,7 @@ get_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
     assert(error == seL4_NoError);
     return seL4_NoError;
 }
+
 
 static seL4_Error
 get_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, seL4_Word ioapic,
@@ -76,23 +78,28 @@ void
 arch_init_simple(simple_t *simple)
 {
     simple->arch_simple.IOPort_cap = get_IOPort_cap;
-    env.simple.arch_simple.ioapic = get_ioapic;
-    env.simple.arch_simple.irq = get_irq;
-    env.simple.arch_simple.msi = get_msi;
-    env.simple.arch_simple.data = (void *) env.simple.data;
+    simple->arch_simple.ioapic = get_ioapic;
+    simple->arch_simple.irq = get_irq;
+    simple->arch_simple.msi = get_msi;
+    simple->arch_simple.data = (void *) simple->data;
+
 }
 
 
-int arch_init_timer(env_t env, init_data_t *init_data) {
+int arch_init_timer(env_t env) {
     /* FIXME Make this more platform agnostic */
 #ifdef CONFIG_IRQ_IOAPIC
-/* Map the HPET so we can query its proprties */
-    vka_object_t frame;
-    void *vaddr;
-    uintptr_t paddr = init_data->untyped_list[init_data->timer_slot_index].untyped_paddr;
-    vaddr = sel4platsupport_map_frame_at(&env->vka, &env->vspace, paddr, seL4_PageBits, &frame);
+/* Map the HPET so we can query its properties */
+    vka_object_t frame;;
+    // TODO fix this for when the timer isn't the last cap in untyped list.
+    size_t total_untyped = simple_get_untyped_count(&env->simple);
+    size_t size_bits;
+    uintptr_t paddr;
+    bool device;
     int irq;
     int vector;
+    simple_get_nth_untyped(&env->simple, total_untyped-1, &size_bits, &paddr, &device);
+    void *vaddr = sel4platsupport_map_frame_at(&env->vka, &env->vspace, paddr, seL4_PageBits, &frame);
     ZF_LOGF_IF(vaddr == NULL, "Failed to map HPET paddr");
     if (!hpet_supports_fsb_delivery(vaddr)) {
         if (!config_set(CONFIG_IRQ_IOAPIC)) {

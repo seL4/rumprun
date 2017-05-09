@@ -19,6 +19,7 @@
 #include <sel4utils/elf.h>
 #include <simple/simple.h>
 #include <vspace/vspace.h>
+#include <sel4utils/vspace.h>
 
 /* max test name size */
 #define APP_NAME_MAX 20
@@ -95,3 +96,6 @@ typedef struct {
     /* address of the stack */
     void *stack;
 } init_data_t;
+
+
+void arch_init_simple(simple_t *simple);

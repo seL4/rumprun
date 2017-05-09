@@ -22,7 +22,6 @@
 #include <sel4platsupport/timer.h>
 #include <platsupport/timer.h>
 
-#include <rumprun/init_data.h>
 #include <sel4/kernel.h>
 
 struct env {
@@ -59,12 +58,15 @@ struct env {
     /* The PCI interrupt handler thread should wake up the runner thread */
     volatile bool should_wakeup;
 
-    init_data_t *init_data;
 };
 typedef struct env *env_t;
 
 extern struct env env;
 
-int arch_init_timer(env_t env, init_data_t *init_data);
-void arch_init_simple(simple_t *simple);
+int arch_init_timer(env_t env);
 void x86_initclocks(void);
+void simple_init_rumprun(simple_t *simple, seL4_CPtr endpoint);
+int custom_simple_vspace_bootstrap_frames(simple_t *simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
+                            vka_t *vka);
+int custom_get_priority(simple_t *simple);
+char *custom_get_cmdline(simple_t *simple);

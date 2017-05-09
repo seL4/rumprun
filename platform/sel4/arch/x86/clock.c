@@ -102,7 +102,7 @@ void
 x86_initclocks(void)
 {
 
-    uint64_t tsc_freq = env.init_data->tsc_freq * US_IN_S;
+    uint64_t tsc_freq = simple_get_arch_info(&env.simple) * US_IN_S;
     tsc_base = rdtsc_pure();
 
     tsc_mult = (NSEC_PER_SEC << 32) / tsc_freq;

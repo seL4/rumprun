@@ -34,7 +34,6 @@
 #include <sel4platsupport/platsupport.h>
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
-#include <rumprun/init_data.h>
 
 /* endpoint to call back to the root task on */
 static seL4_CPtr endpoint;
@@ -62,31 +61,6 @@ struct env env = {
     here to prevent 'undefined reference to `_cpio_archive`' linker errors */
 char _cpio_archive[1];
 
-static init_data_t *
-receive_init_data(seL4_CPtr endpoint)
-{
-    /* wait for a message */
-    seL4_Word badge;
-    UNUSED seL4_MessageInfo_t info;
-
-    info = seL4_Recv(endpoint, &badge);
-
-    /* check the label is correct */
-    if (seL4_MessageInfo_get_length(info) != 1) {
-        ZF_LOGF("Incorrect Label");
-    }
-
-    init_data_t *init_data = (init_data_t *) seL4_GetMR(0);
-    if (init_data->free_slots.start == 0) {
-        ZF_LOGF("Bad init data");
-    }
-    if (init_data->free_slots.end == 0) {
-        ZF_LOGF("Bad init data");
-    }
-
-    return init_data;
-}
-
 extern vspace_t *muslc_this_vspace;
 extern reservation_t muslc_brk_reservation;
 extern void *muslc_brk_reservation_start;
@@ -94,15 +68,17 @@ sel4utils_res_t muslc_brk_reservation_memory;
 
 
 static void
-init_allocator(env_t env, init_data_t *init_data)
+init_allocator(env_t env)
 {
     UNUSED int error;
     UNUSED reservation_t virtual_reservation;
 
     /* initialise allocator */
-    allocman_t *allocator = bootstrap_use_current_1level(init_data->root_cnode,
-                                                         init_data->cspace_size_bits, init_data->free_slots.start,
-                                                         init_data->free_slots.end, ALLOCATOR_STATIC_POOL_SIZE,
+    allocman_t *allocator = bootstrap_use_current_1level(simple_get_cnode(&env->simple),
+                                                         simple_get_cnode_size_bits(&env->simple),
+                                                         simple_get_cap_count(&env->simple),
+                                                         BIT(simple_get_cnode_size_bits(&env->simple)),
+                                                         ALLOCATOR_STATIC_POOL_SIZE,
                                                          allocator_mem_pool);
     if (allocator == NULL) {
         ZF_LOGF("Failed to bootstrap allocator");
@@ -110,37 +86,20 @@ init_allocator(env_t env, init_data_t *init_data)
     allocman_make_vka(&env->vka, allocator);
 
     /* fill the allocator with untypeds */
-    seL4_CPtr slot;
-    unsigned int index;
-    for (slot = init_data->untypeds.start, index = 0;
-            slot <= init_data->untypeds.end;
-            slot++, index++) {
+    size_t total_untyped = simple_get_untyped_count(&env->simple);
 
-        cspacepath_t path;
-        vka_cspace_make_path(&env->vka, slot, &path);
-        uintptr_t paddr = init_data->untyped_list[index].untyped_paddr;
-        size_t size_bits = init_data->untyped_list[index].untyped_size_bits;
-        uint8_t device_type = init_data->untyped_list[index].untyped_is_device;
-        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, device_type);
+    for(int i = 0; i < total_untyped; i++) {
+        size_t size_bits;
+        uintptr_t paddr;
+        uint8_t device;
+        cspacepath_t path = allocman_cspace_make_path(allocator, simple_get_nth_untyped(&env->simple, i, &size_bits, &paddr, &device));
+        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, device);
         if (error) {
             ZF_LOGF("Failed to add untyped objects to allocator");
         }
     }
 
-    /* create a vspace */
-    void *existing_frames[init_data->stack_pages + 3];
-    existing_frames[0] = (void *) init_data;
-    existing_frames[1] = ((char *) init_data) + PAGE_SIZE_4K;
-    existing_frames[2] = seL4_GetIPCBuffer();
-    if (init_data->stack_pages == 0) {
-        ZF_LOGF("No stack");
-    }
-    for (int i = 0; i < init_data->stack_pages; i++) {
-        existing_frames[i + 3] = init_data->stack + (i * PAGE_SIZE_4K);
-    }
-
-    error = sel4utils_bootstrap_vspace(&env->vspace, &alloc_data, init_data->page_directory, &env->vka,
-                                       NULL, NULL, existing_frames);
+    error = custom_simple_vspace_bootstrap_frames(&env->simple, &env->vspace, &alloc_data, &env->vka);
 
     error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
     if (error) {
@@ -159,12 +118,13 @@ init_allocator(env_t env, init_data_t *init_data)
     }
 
     bootstrap_configure_virtual_pool(allocator, vaddr, ALLOCATOR_VIRTUAL_POOL_SIZE,
-                                     init_data->page_directory);
+                                     simple_get_pd(&env->simple));
 
 }
 
 
-static void init_timer(env_t env, init_data_t *init_data)
+
+static void init_timer(env_t env)
 {
 
     UNUSED int error;
@@ -176,7 +136,7 @@ static void init_timer(env_t env, init_data_t *init_data)
         ZF_LOGF("Failed to allocate notification object");
     }
 
-    error = arch_init_timer(env, init_data);
+    error = arch_init_timer(env);
     if (error != 0) {
         ZF_LOGF("arch_init_timer failed");
     }
@@ -228,7 +188,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     /* Set up TLS for main thread.  The main thread can't do this itself
         so this thread is used before it actually handles PCI stuff */
     seL4_UserContext context;
-    int res = seL4_TCB_ReadRegisters(env.init_data->tcb, 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
+    int res = seL4_TCB_ReadRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
     if (res) {
         ZF_LOGF("Could not read registers");
     }
@@ -239,7 +199,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
        so that the target thread is resumed correctly instead of recalling the invocation. */
     seL4_Word pc = sel4utils_get_instruction_pointer(context);
     sel4utils_set_instruction_pointer(&context, pc + ARCH_SYSCALL_INSTRUCTION_SIZE);
-    res = seL4_TCB_WriteRegisters(env.init_data->tcb, 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
+    res = seL4_TCB_WriteRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
     if (res) {
         ZF_LOGF("Could not write registers");
     }
@@ -267,25 +227,18 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
 
 int main(int argc, char **argv)
 {
-    /* read in init data */
-    init_data_t *init_data;
     if (argc != 2) {
         ZF_LOGF("Incorrect num args");
     }
     endpoint = (seL4_CPtr) atoi(argv[1]);
-    init_data = receive_init_data(endpoint);
-    env.init_data = init_data;
+
+    simple_init_rumprun(&env.simple, endpoint);
 
     /* initialse cspace, vspace and untyped memory allocation */
-    init_allocator(&env, init_data);
+    init_allocator(&env);
     int res;
     /* initialise the timer */
-    env.simple.data = (void *) init_data;
-
-
-    arch_init_simple(&env.simple);
-
-    init_timer(&env, init_data);
+    init_timer(&env);
     /* initialise serial
         prints before here _may_ crash the system */
     platsupport_serial_setup_simple(NULL, &env.simple, &env.vka);
@@ -307,21 +260,21 @@ int main(int argc, char **argv)
     sync_bin_sem_init(&env.halt_semaphore, env.halt_notification.cptr, 1);
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     init_data->priority, init_data->root_cnode, seL4_NilData,
+                                     custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.timing_thread);
     if (res != 0) {
         ZF_LOGF("Configure thread failed");
     }
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     init_data->priority, init_data->root_cnode, seL4_NilData,
+                                     custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.pci_thread);
     if (res != 0) {
         ZF_LOGF("Configure thread failed");
     }
 
 
-    res = seL4_TCB_SetPriority(init_data->tcb, init_data->priority - 1);
+    res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.simple) - 1);
     if (res != 0) {
         ZF_LOGF("seL4_TCB_SetPriority thread failed");
     }
@@ -347,7 +300,8 @@ int main(int argc, char **argv)
     }
 
 #ifdef CONFIG_IOMMU
-    res = sel4utils_make_iommu_dma_alloc(&env.vka, &env.vspace, &env.io_ops.dma_manager, 1, &init_data->io_space);
+    seL4_CPtr io_space = simple_init_cap(&env.simple, seL4_CapIOSpace);
+    res = sel4utils_make_iommu_dma_alloc(&env.vka, &env.vspace, &env.io_ops.dma_manager, 1, &io_space);
     if (res != 0) {
         ZF_LOGF("sel4utils_make_iommu_dma_alloc failed");
     }
@@ -366,7 +320,7 @@ int main(int argc, char **argv)
     provide_vmem(&env);
     intr_init();
 
-    bmk_sched_startmain(bmk_mainthread, init_data->cmdline);
+    bmk_sched_startmain(bmk_mainthread, custom_get_cmdline(&env.simple));
 
     return 0;
 }
