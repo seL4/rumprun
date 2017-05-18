@@ -74,6 +74,8 @@ typedef struct {
     /* Rump cmdline */
     char cmdline[RUMP_CONFIG_MAX];
 
+    /* Size of memory to give to rumprun */
+    size_t rumprun_memory_size;
     /* priority the test process is running at */
     int priority;
 

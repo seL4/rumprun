@@ -23,6 +23,8 @@
 #include <platsupport/timer.h>
 
 #include <sel4/kernel.h>
+#include <sel4platsupport/pmem.h>
+#include <rumprun/custom_simple.h>
 
 struct env {
     /* An initialised vka that may be used by the test. */
@@ -33,6 +35,7 @@ struct env {
     seL4_timer_t *timer;
     /* abstract interface over application init */
     simple_t simple;
+    custom_simple_t custom_simple;
     /* notification for timer */
     vka_object_t timer_notification;
     vka_object_t pci_notification;
@@ -65,8 +68,4 @@ extern struct env env;
 
 int arch_init_timer(env_t env);
 void x86_initclocks(void);
-void simple_init_rumprun(simple_t *simple, seL4_CPtr endpoint);
-int custom_simple_vspace_bootstrap_frames(simple_t *simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
-                            vka_t *vka);
-int custom_get_priority(simple_t *simple);
-char *custom_get_cmdline(simple_t *simple);
+void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint);

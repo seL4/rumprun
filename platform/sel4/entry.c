@@ -9,7 +9,7 @@
  *
  * @TAG(DATA61_BSD)
  */
-
+#include <autoconf.h>
 #include <sel4/sel4.h>
 #include <sel4/helpers.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #include <allocman/vka.h>
 #include <allocman/bootstrap.h>
 #include <sel4platsupport/timer.h>
-
+#include <simple/simple_helpers.h>
 #include <sel4platsupport/io.h>
 #include <sel4utils/iommu_dma.h>
 #include <sel4utils/page_dma.h>
@@ -34,20 +34,21 @@
 #include <sel4platsupport/platsupport.h>
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
+#include <sel4utils/stack.h>
 
-/* endpoint to call back to the root task on */
-static seL4_CPtr endpoint;
 /* global static memory for init */
 static sel4utils_alloc_data_t alloc_data;
 
-#define NUM_PAGES_FOR_ME 20000
-#define MY_VIRTUAL_MEMORY ((1 <<seL4_PageBits) * NUM_PAGES_FOR_ME )
 /* dimensions of virtual memory for the allocator to use */
 #define ALLOCATOR_VIRTUAL_POOL_SIZE ((1 << seL4_PageBits) * 4000)
 
 /* allocator static pool */
 #define ALLOCATOR_STATIC_POOL_SIZE ((1 << seL4_PageBits) * 20)
 static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
+
+/* Damn linker errors: This symbol is overrided by files_to_obj.sh it is included
+    here to prevent 'undefined reference to `_cpio_archive`' linker errors */
+char _cpio_archive[1];
 
 /* Environment global data */
 struct env env = {
@@ -56,16 +57,10 @@ struct env env = {
     .should_wakeup = 0
 };
 
-
-/* Damn linker errors: This symbol is overrided by files_to_obj.sh it is included
-    here to prevent 'undefined reference to `_cpio_archive`' linker errors */
-char _cpio_archive[1];
-
 extern vspace_t *muslc_this_vspace;
 extern reservation_t muslc_brk_reservation;
 extern void *muslc_brk_reservation_start;
 sel4utils_res_t muslc_brk_reservation_memory;
-
 
 static void
 init_allocator(env_t env)
@@ -76,28 +71,22 @@ init_allocator(env_t env)
     /* initialise allocator */
     allocman_t *allocator = bootstrap_use_current_1level(simple_get_cnode(&env->simple),
                                                          simple_get_cnode_size_bits(&env->simple),
-                                                         simple_get_cap_count(&env->simple),
+                                                         simple_last_valid_cap(&env->simple) + 1,
                                                          BIT(simple_get_cnode_size_bits(&env->simple)),
                                                          ALLOCATOR_STATIC_POOL_SIZE,
                                                          allocator_mem_pool);
     ZF_LOGF_IF(allocator == NULL, "Failed to bootstrap allocator");
     allocman_make_vka(&env->vka, allocator);
 
-    /* fill the allocator with untypeds */
-    size_t total_untyped = simple_get_untyped_count(&env->simple);
+    int num_regions = custom_get_num_regions(&env->custom_simple);
+    pmem_region_t *regions = allocman_mspace_alloc(allocator, sizeof(pmem_region_t) * num_regions, &error);
+    ZF_LOGF_IF(error, "allocman_mspace_alloc failed to allocate regions");
+    error = custom_get_region_list(&env->custom_simple, num_regions, regions);
+    ZF_LOGF_IF(num_regions != error, "calloc returned NULL");
+    allocman_add_simple_untypeds_with_regions(allocator, &env->simple, num_regions, regions);
+    allocman_mspace_free(allocator, regions, sizeof(pmem_region_t) * num_regions);
 
-    for(int i = 0; i < total_untyped; i++) {
-        size_t size_bits;
-        uintptr_t paddr;
-        uint8_t device;
-        cspacepath_t path = allocman_cspace_make_path(allocator, simple_get_nth_untyped(&env->simple, i, &size_bits, &paddr, &device));
-        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, device);
-        if (error) {
-            ZF_LOGF("Failed to add untyped objects to allocator");
-        }
-    }
-
-    error = custom_simple_vspace_bootstrap_frames(&env->simple, &env->vspace, &alloc_data, &env->vka);
+    error = custom_simple_vspace_bootstrap_frames(&env->custom_simple, &env->vspace, &alloc_data, &env->vka);
 
     error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
     ZF_LOGF_IF(error, "Failed to reserve_range");
@@ -136,7 +125,10 @@ provide_vmem(env_t env)
     bmk_core_init(BMK_THREAD_STACK_PAGE_ORDER);
 
     vspace_new_pages_config_t config;
-    if (default_vspace_new_pages_config(NUM_PAGES_FOR_ME, 12, &config)) {
+    size_t rumprun_size = env->custom_simple.rumprun_memory_size;
+    size_t rumprun_pages = rumprun_size / PAGE_SIZE_4K;
+    printf("num pages %zd\n", rumprun_pages);
+    if (default_vspace_new_pages_config(rumprun_pages, seL4_PageBits, &config)) {
         ZF_LOGF("Failed to create config");
     }
     if (vspace_new_pages_config_use_device_ut(true, &config)) {
@@ -147,9 +139,9 @@ provide_vmem(env_t env)
     ZF_LOGF_IF(osend == NULL, "vspace returned null");
 
     printf("Starting paddr: %p\n", osend);
-    bmk_pgalloc_loadmem((uintptr_t) osend, (uintptr_t) osend + MY_VIRTUAL_MEMORY);
+    bmk_pgalloc_loadmem((uintptr_t) osend, (uintptr_t) osend + rumprun_size);
 
-    bmk_memsize = MY_VIRTUAL_MEMORY;
+    bmk_memsize = rumprun_size;
 }
 
 static void
@@ -158,12 +150,31 @@ wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 
     while (1) {
         seL4_Word sender_badge;
-        seL4_Wait(env.timer_notification.cptr, &sender_badge);
-        sel4_timer_handle_single_irq(env.timer);
+        if (is_hw_timer(&env.custom_simple)) {
+            seL4_Wait(env.timer_notification.cptr, &sender_badge);
+            sel4_timer_handle_single_irq(env.timer);
+        } else {
+            seL4_Wait(env.custom_simple.timer_config.timer_cap, &sender_badge);
+        }
         seL4_Signal(env.halt_notification.cptr);
     }
 }
 
+void rump_irq_handle(int intr) {
+    sync_bin_sem_wait(&env.spl_semaphore);
+
+    ZF_LOGF_IF(env.spldepth != 0, "spldepth should be 0.  This thread should be blocked.");
+    if (env.should_wakeup != 0) {
+        seL4_Signal(env.halt_notification.cptr);
+    }
+
+    env.mask_the_mask = 1;
+
+    isr(intr);
+    sync_bin_sem_post(&env.spl_semaphore);
+    env.mask_the_mask = 0;
+
+}
 
 static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 {
@@ -183,41 +194,37 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     res = seL4_TCB_WriteRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
     ZF_LOGF_IF(res, "Could not write registers");
 
+    env.mask_the_mask = 0;
     while (1) {
         seL4_Word sender_badge;
-        env.mask_the_mask = 0;
         seL4_MessageInfo_t UNUSED mess = seL4_Recv(env.pci_notification.cptr, &sender_badge);
-        sync_bin_sem_wait(&env.spl_semaphore);
-
-        ZF_LOGF_IF(env.spldepth != 0, "spldepth should be 0.  This thread should be blocked.");
-        if (env.should_wakeup != 0) {
-            seL4_Signal(env.halt_notification.cptr);
-        }
-
-        env.mask_the_mask = 1;
-
-        isr(sender_badge);
-        sync_bin_sem_post(&env.spl_semaphore);
-
+        rump_irq_handle(sender_badge);
     }
 }
 
-int main(int argc, char **argv)
+int init_rumprun(custom_simple_t *custom_simple)
 {
-    ZF_LOGF_IF(argc != 2, "Incorrect num args");
-    endpoint = (seL4_CPtr) atoi(argv[1]);
-
-    simple_init_rumprun(&env.simple, endpoint);
+    if (custom_simple != &env.custom_simple) {
+        env.custom_simple = *custom_simple;
+    }
+    if (&env.simple != env.custom_simple.simple) {
+        env.simple = *env.custom_simple.simple;
+    }
 
     /* initialse cspace, vspace and untyped memory allocation */
     init_allocator(&env);
+
     int res;
     /* initialise the timer */
-    init_timer(&env);
+    if (env.custom_simple.timer_config.timer == TIMER_HW) {
+        init_timer(&env);
+    }
+
     /* initialise serial
         prints before here _may_ crash the system */
-    platsupport_serial_setup_simple(NULL, &env.simple, &env.vka);
-
+    if (env.custom_simple.serial_config.serial == SERIAL_HW) {
+        platsupport_serial_setup_simple(NULL, &env.simple, &env.vka);
+    }
 
     res = vka_alloc_notification(&env.vka, &env.pci_notification);
     ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
@@ -229,23 +236,25 @@ int main(int argc, char **argv)
     sync_bin_sem_init(&env.halt_semaphore, env.halt_notification.cptr, 1);
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
+                                     custom_get_priority(&env.custom_simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.timing_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
+                                     custom_get_priority(&env.custom_simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.pci_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
 
 
-    res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.simple) - 1);
+    res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.custom_simple) - 1);
     ZF_LOGF_IF(res != 0, "seL4_TCB_SetPriority thread failed");
     res = sel4utils_start_thread(&env.timing_thread, wait_for_timer_interrupt, NULL, NULL,
                                  1);
+
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_timer_interrupt) failed");
     res = sel4utils_start_thread(&env.pci_thread, wait_for_pci_interrupt, NULL, NULL,
                                  1);
+
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_pci_interrupt) failed");
 
     res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
@@ -271,7 +280,7 @@ int main(int argc, char **argv)
     provide_vmem(&env);
     intr_init();
 
-    bmk_sched_startmain(bmk_mainthread, custom_get_cmdline(&env.simple));
+    bmk_sched_startmain(bmk_mainthread, (void *) custom_get_cmdline(&env.custom_simple));
 
     return 0;
 }

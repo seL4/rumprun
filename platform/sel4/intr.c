@@ -118,8 +118,12 @@ doisr(void *arg)
                 ih->ih_fun(ih->ih_arg);
             }
             /* Ack seL4 interrupt now that it has been handled */
-            int error = seL4_IRQHandler_Ack(env.caps[i]);
-            ZF_LOGF_IF(error != 0, "seL4_IRQHandler_Ack failed");
+            if (is_hw_pci_config(&env.custom_simple)) {
+                int error = seL4_IRQHandler_Ack(env.caps[i]);
+                ZF_LOGF_IFERR(error, "seL4_IRQHandler_Ack failed");
+            } else {
+                env.custom_simple.ethernet_intr_config.eth_irq_acknowledge();
+            }
         }
         rumpkern_unsched(&nlocks, NULL);
 

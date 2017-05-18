@@ -9,11 +9,13 @@
  *
  * @TAG(DATA61_BSD)
  */
-
 #include <rumprun/init_data.h>
 #include <simple/simple.h>
 #include <utils/util.h>
 #include <sel4/helpers.h>
+#include <allocman/utspace/utspace.h>
+#include <rumprun/custom_simple.h>
+
 static int simple_default_cap_count(void *data) {
     assert(data);
 
@@ -90,7 +92,7 @@ static int simple_default_untyped_count(void *data) {
     return ((init_data_t *)data)->untypeds.end - ((init_data_t *)data)->untypeds.start;
 }
 
-static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits, uintptr_t *paddr, uint8_t *device) {
+static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits, uintptr_t *paddr, bool *device) {
     assert(data && size_bits && paddr);
 
     init_data_t *init_data = data;
@@ -103,7 +105,8 @@ static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits
             *size_bits = init_data->untyped_list[n].untyped_size_bits;
         }
         if (device != NULL) {
-            *device = (uint8_t)init_data->untyped_list[n].untyped_is_device;
+            uint8_t custom_device = init_data->untyped_list[n].untyped_is_device;
+            *device = custom_device ==ALLOCMAN_UT_KERNEL ? 0 : 1;
         }
         return init_data->untypeds.start + (n);
     }
@@ -112,6 +115,9 @@ static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits
 }
 
 
+static seL4_CPtr simple_default_nth_cap(void *data, int n) {
+    return n;
+}
 
 
 static seL4_Word simple_default_arch_info(void *data) {
@@ -120,9 +126,17 @@ static seL4_Word simple_default_arch_info(void *data) {
     return ((init_data_t *)data)->tsc_freq;
 }
 
-int custom_simple_vspace_bootstrap_frames(simple_t *simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
+int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
                             vka_t *vka) {
-    init_data_t *init_data = simple->data;
+    if (custom_simple->camkes) {
+        void *existing_frames_camkes[] = {
+            NULL
+        };
+        return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(custom_simple->simple), vka,
+                                           NULL, NULL, existing_frames_camkes);
+
+    }
+    init_data_t *init_data = custom_simple->simple->data;
     void *existing_frames[init_data->stack_pages + 4];
     existing_frames[0] = (void *) init_data;
     existing_frames[1] = ((char *) init_data) + PAGE_SIZE_4K;
@@ -133,19 +147,17 @@ int custom_simple_vspace_bootstrap_frames(simple_t *simple, vspace_t *vspace, se
         existing_frames[i + 3] = init_data->stack + (i * PAGE_SIZE_4K);
     }
     existing_frames[i + 3] = NULL;
-    return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(simple), vka,
+    return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(custom_simple->simple), vka,
                                        NULL, NULL, existing_frames);
 
 }
 
-int custom_get_priority(simple_t *simple) {
-    init_data_t *init_data = simple->data;
-    return init_data->priority;
+int custom_get_priority(custom_simple_t *custom_simple) {
+    return custom_simple->priority;
 }
 
-char *custom_get_cmdline(simple_t *simple) {
-    init_data_t *init_data = simple->data;
-    return init_data->cmdline;
+const char *custom_get_cmdline(custom_simple_t *custom_simple) {
+    return custom_simple->cmdline;
 
 }
 
@@ -169,18 +181,63 @@ receive_init_data(seL4_CPtr endpoint)
     return init_data;
 }
 
+int custom_get_num_regions(custom_simple_t *custom_simple) {
+    if (custom_simple->camkes) {
+        return 0;
+    }
+    init_data_t *init_data = custom_simple->simple->data;
+    int j = 0;
+    for (int i = 0; i < (init_data->untypeds.end - init_data->untypeds.start); i++) {
+        uint8_t custom_device = init_data->untyped_list[i].is_device;
+        if (custom_device == ALLOCMAN_UT_DEV_MEM) {
+            j++;
+        }
 
-void simple_init_rumprun(simple_t *simple, seL4_CPtr endpoint) {
-    assert(simple);
+    }
+    return j;
+
+}
+
+int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem_region_t *regions) {
+    if (custom_simple->camkes) {
+        return 0;
+    }
+    init_data_t *init_data = custom_simple->simple->data;
+    int j = 0;
+    for (int i = 0; i < (init_data->untypeds.end - init_data->untypeds.start); i++) {
+        uint8_t custom_device = init_data->untyped_list[i].untyped_is_device;
+        if (custom_device == ALLOCMAN_UT_DEV_MEM) {
+            pmem_region_t region = {
+                .type = PMEM_TYPE_RAM,
+                .base_addr = init_data->untyped_list[i].untyped_paddr,
+                .length = BIT(init_data->untyped_list[i].untyped_size_bits),
+            };
+            regions[j] = region;
+            j++;
+            if (j == num_regions) {
+                return j;
+            }
+        }
+
+    }
+    return j;
+}
+
+void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint) {
     init_data_t *init_data = receive_init_data(endpoint);
     assert(init_data);
-
+    simple_t *simple = custom_simple->simple;
+    custom_simple->camkes = false;
+    custom_simple->cmdline = init_data->cmdline;
+    custom_simple->priority = init_data->priority;
+    custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
     simple->data = init_data;
     simple->cap_count = &simple_default_cap_count;
     simple->init_cap = &simple_default_init_cap;
     simple->cnode_size = &simple_default_cnode_size;
     simple->untyped_count = &simple_default_untyped_count;
     simple->nth_untyped = &simple_default_nth_untyped;
+    simple->nth_cap = &simple_default_nth_cap;
     simple->arch_info = &simple_default_arch_info;
     arch_init_simple(simple);
 }

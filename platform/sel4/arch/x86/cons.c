@@ -37,6 +37,7 @@
 
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
+#include <sel4/helpers.h>
 
 
 #include <bmk-core/printf.h>
@@ -48,15 +49,15 @@ static void (*vcons_putc)(int) = (void(*)(int))putchar;
 void
 cons_init(void)
 {
-
-    vcons_putc = (void(*)(int))putchar;
+    if (env.custom_simple.serial_config.serial != SERIAL_HW) {
+        vcons_putc = env.custom_simple.serial_config.putchar;
+    }
     bmk_printf_init(vcons_putc, NULL);
 }
 
 void
 cons_putc(int c)
 {
-
     vcons_putc(c);
 }
 

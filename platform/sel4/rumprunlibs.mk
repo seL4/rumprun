@@ -56,7 +56,7 @@ BASEFILE_LD_FLAGS = -Wl,-r \
 					-Wl,-dT ${RUMPRUN_BASE_DIR}/platform/sel4/stage1.lds
 
 # Objcopy command used when constructing rumprun basefile manually.
-BASEFILE_OBJCOPY = ${OBJCOPY} -w -G bmk_* -G rumpuser_* -G jsmn_* -G __assert_fail \
+BASEFILE_OBJCOPY = ${OBJCOPY} -w -G "bmk_*" -G "rumpuser_*" -G "jsmn_*" -G __assert_fail \
 	     -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write -G _zf_log_output_lvl
 
 # Example manual construction of Rumprun BASEFILE:

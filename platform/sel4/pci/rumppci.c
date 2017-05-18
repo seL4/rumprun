@@ -44,13 +44,24 @@ static int intrs[BMK_MAXINTR];
 int
 rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val)
 {
-    return ps_io_port_out(&env.io_ops.io_port_ops, port, io_size, val);
+    if (env.custom_simple.camkes) {
+        ZF_LOGF("ERROR\n");
+    } else {
+        return ps_io_port_out(&env.io_ops.io_port_ops, port, io_size, val);
+    }
+    return 0;
 }
 
 int
 rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result)
 {
-    return ps_io_port_in(&env.io_ops.io_port_ops, port, io_size, result);
+    if (env.custom_simple.camkes) {
+        ZF_LOGF("ERROR\n");
+
+    } else {
+        return ps_io_port_in(&env.io_ops.io_port_ops, port, io_size, result);
+    }
+    return 0;
 }
 
 int
@@ -85,7 +96,10 @@ rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun, int reg,
     unsigned int data;
     int res;
     addr = makeaddr(bus, dev, fun, reg);
-
+    if (!is_hw_pci_config(&env.custom_simple)) {
+        *value =  env.custom_simple.pci_config_config.pci_config_read32(bus, dev, fun, reg);
+        return 0;
+    }
     res = rumpcomp_pci_port_out( PCI_CONF_ADDR, 4, addr);
 
     if (res) {
@@ -105,6 +119,10 @@ rumpcomp_pci_confwrite(unsigned bus, unsigned dev, unsigned fun, int reg,
 {
     uint32_t addr;
     int res;
+    if (!is_hw_pci_config(&env.custom_simple)) {
+        env.custom_simple.pci_config_config.pci_config_write32(bus, dev, fun, reg, value);
+        return 0;
+    }
 
     addr = makeaddr(bus, dev, fun, reg);
     res = rumpcomp_pci_port_out(PCI_CONF_ADDR, 4, addr);
@@ -139,7 +157,7 @@ rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
 void *
 rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 {
-    if (env.caps[intrs[cookie]] == 0) {
+    if (env.caps[intrs[cookie]] == 0 && !env.custom_simple.camkes) {
         int error = vka_cspace_alloc(&env.vka, &env.caps[intrs[cookie]]);
         ZF_LOGF_IF(error != 0, "Failed to allocate cslot, error %d", error);
         cspacepath_t path;
