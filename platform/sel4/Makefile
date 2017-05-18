@@ -31,7 +31,7 @@ ARCHDIR?= ${MACHINE}
 SEL4_MACHINE_ARCH?= ${MACHINE_GNU_ARCH}
 
 
-LDSCRIPT:=	$(abspath arch/${ARCHDIR}/kern.ldscript)
+LDSCRIPT:=	$(abspath stage2.lds)
 SRCS+=		entry.c undefs.c kernel.c intr.c
 include ../Makefile.inc
 include arch/${ARCHDIR}/Makefile.inc
@@ -82,21 +82,10 @@ ${MAINOBJ}: ${OBJS} platformlibs
 	${CC} -nostdlib ${CFLAGS} -Wl,-r ${CRTOBJFILES} ${OBJS} ${FINOBJFILES} -o $@ \
 	    -L${RROBJLIB}/libbmk_core -L${RROBJLIB}/libbmk_rumpuser -L$(SEL4_LIBDIR) \
 	    -Wl,--undefined=__vsyscall_ptr -Wl,--start-group $(SEL4LIBS:%=-l%) \
-		-Wl,--end-group -Wl,--whole-archive -lbmk_rumpuser -lbmk_core -Wl,--no-whole-archive
+		-Wl,--end-group -Wl,--whole-archive -lbmk_rumpuser -lbmk_core -Wl,--no-whole-archive -Wl,-dT stage1.lds
 	# Objcopy is used to promote all -G symbols to global symbols while hiding all other symbols.
 	${OBJCOPY} -w -G bmk_* -G rumpuser_* -G jsmn_* -G __assert_fail \
 	     -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write -G _zf_log_output_lvl $@
-	# We need to rename all constructors that muslc and seL4 libraries use so that the symbols and
-	# sections don't have name collisions with netbsd libc and apps that get linked later.
-	# This objdump dumps and extracts the constructor sections and then objcopy renames them.
-	${OBJDUMP} -h $@ |\
-	grep \.init_array |\
-	 awk '{print $$2}'|\
-	 cut -d'.' -f 3 |\
-	 xargs -I {} ${OBJCOPY} --rename-section .init_array.{}=.init_array_sel4.{} $@
-	# Renames the __init_array start and end symbols that muslc calls so that we can have two C libraries
-	# initialised in the same address space.
-	${OBJCOPY} --redefine-sym __init_array_start=__init_array_start_sel4 --redefine-sym __init_array_end=__init_array_end_sel4 $@
 
 clean: commonclean
 	rm -f ${OBJS_BMK} include/sel4/machine buildtest ${MAINOBJ}
