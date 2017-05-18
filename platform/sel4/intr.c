@@ -119,9 +119,7 @@ doisr(void *arg)
             }
             /* Ack seL4 interrupt now that it has been handled */
             int error = seL4_IRQHandler_Ack(env.caps[i]);
-            if (error != 0) {
-                ZF_LOGF("seL4_IRQHandler_Ack failed");
-            }
+            ZF_LOGF_IF(error != 0, "seL4_IRQHandler_Ack failed");
         }
         rumpkern_unsched(&nlocks, NULL);
 

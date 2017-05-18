@@ -80,9 +80,7 @@ init_allocator(env_t env)
                                                          BIT(simple_get_cnode_size_bits(&env->simple)),
                                                          ALLOCATOR_STATIC_POOL_SIZE,
                                                          allocator_mem_pool);
-    if (allocator == NULL) {
-        ZF_LOGF("Failed to bootstrap allocator");
-    }
+    ZF_LOGF_IF(allocator == NULL, "Failed to bootstrap allocator");
     allocman_make_vka(&env->vka, allocator);
 
     /* fill the allocator with untypeds */
@@ -102,9 +100,7 @@ init_allocator(env_t env)
     error = custom_simple_vspace_bootstrap_frames(&env->simple, &env->vspace, &alloc_data, &env->vka);
 
     error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
-    if (error) {
-        ZF_LOGF("Failed to reserve_range");
-    }
+    ZF_LOGF_IF(error, "Failed to reserve_range");
     muslc_this_vspace = &env->vspace;
     muslc_brk_reservation.res = &muslc_brk_reservation_memory;
 
@@ -113,9 +109,7 @@ init_allocator(env_t env)
     void *vaddr;
     virtual_reservation = vspace_reserve_range(&env->vspace, ALLOCATOR_VIRTUAL_POOL_SIZE,
                                                seL4_AllRights, 1, &vaddr);
-    if (virtual_reservation.res == 0) {
-        ZF_LOGF("Failed to switch allocator to virtual memory pool");
-    }
+    ZF_LOGF_IF(virtual_reservation.res == 0, "Failed to switch allocator to virtual memory pool");
 
     bootstrap_configure_virtual_pool(allocator, vaddr, ALLOCATOR_VIRTUAL_POOL_SIZE,
                                      simple_get_pd(&env->simple));
@@ -126,21 +120,12 @@ init_allocator(env_t env)
 
 static void init_timer(env_t env)
 {
-
-    UNUSED int error;
-
-    // arch_init_simple(&env->simple);
-
+    int error;
     error = vka_alloc_notification(&env->vka, &env->timer_notification);
-    if (error != 0) {
-        ZF_LOGF("Failed to allocate notification object");
-    }
+    ZF_LOGF_IF(error != 0, "Failed to allocate notification object");
 
     error = arch_init_timer(env);
-    if (error != 0) {
-        ZF_LOGF("arch_init_timer failed");
-    }
-
+    ZF_LOGF_IF(error != 0, "arch_init_timer failed");
 }
 
 static void
@@ -159,9 +144,7 @@ provide_vmem(env_t env)
     }
 
     osend = vspace_new_pages_with_config(&env->vspace, &config, seL4_CapRights_new(1, 1, 1));
-    if (osend == NULL) {
-        ZF_LOGF("vspace returned null");
-    }
+    ZF_LOGF_IF(osend == NULL, "vspace returned null");
 
     printf("Starting paddr: %p\n", osend);
     bmk_pgalloc_loadmem((uintptr_t) osend, (uintptr_t) osend + MY_VIRTUAL_MEMORY);
@@ -189,9 +172,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
         so this thread is used before it actually handles PCI stuff */
     seL4_UserContext context;
     int res = seL4_TCB_ReadRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
-    if (res) {
-        ZF_LOGF("Could not read registers");
-    }
+    ZF_LOGF_IF(res, "Could not read registers");
     context.tls_base = (seL4_Word)&env.tls_base_ptr;
     /* When you call write registers on a thread, seL4 changes it to be restarted.
        Because the target thread is of a lower priority, its last instruction was an
@@ -200,9 +181,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     seL4_Word pc = sel4utils_get_instruction_pointer(context);
     sel4utils_set_instruction_pointer(&context, pc + ARCH_SYSCALL_INSTRUCTION_SIZE);
     res = seL4_TCB_WriteRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
-    if (res) {
-        ZF_LOGF("Could not write registers");
-    }
+    ZF_LOGF_IF(res, "Could not write registers");
 
     while (1) {
         seL4_Word sender_badge;
@@ -210,9 +189,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
         seL4_MessageInfo_t UNUSED mess = seL4_Recv(env.pci_notification.cptr, &sender_badge);
         sync_bin_sem_wait(&env.spl_semaphore);
 
-        if (env.spldepth != 0) {
-            ZF_LOGF("spldepth should be 0.  This thread should be blocked.");
-        }
+        ZF_LOGF_IF(env.spldepth != 0, "spldepth should be 0.  This thread should be blocked.");
         if (env.should_wakeup != 0) {
             seL4_Signal(env.halt_notification.cptr);
         }
@@ -227,9 +204,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        ZF_LOGF("Incorrect num args");
-    }
+    ZF_LOGF_IF(argc != 2, "Incorrect num args");
     endpoint = (seL4_CPtr) atoi(argv[1]);
 
     simple_init_rumprun(&env.simple, endpoint);
@@ -245,71 +220,47 @@ int main(int argc, char **argv)
 
 
     res = vka_alloc_notification(&env.vka, &env.pci_notification);
-    if (res != 0) {
-        ZF_LOGF("Failed to allocate notification object");
-    }
+    ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
     res = vka_alloc_notification(&env.vka, &env.halt_notification);
-    if (res != 0) {
-        ZF_LOGF("Failed to allocate notification object");
-    }
+    ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
     res = vka_alloc_notification(&env.vka, &env.spl_notification);
-    if (res != 0) {
-        ZF_LOGF("Failed to allocate notification object");
-    }
+    ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
     sync_bin_sem_init(&env.spl_semaphore, env.spl_notification.cptr, 1);
     sync_bin_sem_init(&env.halt_semaphore, env.halt_notification.cptr, 1);
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
                                      custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.timing_thread);
-    if (res != 0) {
-        ZF_LOGF("Configure thread failed");
-    }
+    ZF_LOGF_IF(res != 0, "Configure thread failed");
 
     res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
                                      custom_get_priority(&env.simple), simple_get_cnode(&env.simple), seL4_NilData,
                                      &env.pci_thread);
-    if (res != 0) {
-        ZF_LOGF("Configure thread failed");
-    }
+    ZF_LOGF_IF(res != 0, "Configure thread failed");
 
 
     res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.simple) - 1);
-    if (res != 0) {
-        ZF_LOGF("seL4_TCB_SetPriority thread failed");
-    }
+    ZF_LOGF_IF(res != 0, "seL4_TCB_SetPriority thread failed");
     res = sel4utils_start_thread(&env.timing_thread, wait_for_timer_interrupt, NULL, NULL,
                                  1);
-    if (res != 0) {
-        ZF_LOGF("sel4utils_start_thread(wait_for_timer_interrupt) failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_timer_interrupt) failed");
     res = sel4utils_start_thread(&env.pci_thread, wait_for_pci_interrupt, NULL, NULL,
                                  1);
-    if (res != 0) {
-        ZF_LOGF("sel4utils_start_thread(wait_for_pci_interrupt) failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_pci_interrupt) failed");
 
     res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
-    if (res != 0) {
-        ZF_LOGF("sel4platsupport_new_io_ops failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
 
     res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple);
-    if (res != 0) {
-        ZF_LOGF("sel4platsupport_get_io_port_ops failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4platsupport_get_io_port_ops failed");
 
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space = simple_init_cap(&env.simple, seL4_CapIOSpace);
     res = sel4utils_make_iommu_dma_alloc(&env.vka, &env.vspace, &env.io_ops.dma_manager, 1, &io_space);
-    if (res != 0) {
-        ZF_LOGF("sel4utils_make_iommu_dma_alloc failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4utils_make_iommu_dma_alloc failed");
 #else
     res = sel4utils_new_page_dma_alloc(&env.vka, &env.vspace, &env.io_ops.dma_manager);
-    if (res != 0) {
-        ZF_LOGF("sel4utils_new_page_dma_alloc failed");
-    }
+    ZF_LOGF_IF(res != 0, "sel4utils_new_page_dma_alloc failed");
 #endif
 
     cons_init();

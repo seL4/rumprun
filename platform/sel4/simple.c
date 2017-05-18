@@ -115,9 +115,7 @@ static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits
 
 
 static seL4_Word simple_default_arch_info(void *data) {
-    if (data == NULL) {
-        ZF_LOGE("Data is null!");
-    }
+    ZF_LOGE_IF(data == NULL, "Data is null!");
 
     return ((init_data_t *)data)->tsc_freq;
 }
@@ -129,9 +127,7 @@ int custom_simple_vspace_bootstrap_frames(simple_t *simple, vspace_t *vspace, se
     existing_frames[0] = (void *) init_data;
     existing_frames[1] = ((char *) init_data) + PAGE_SIZE_4K;
     existing_frames[2] = seL4_GetIPCBuffer();
-    if (init_data->stack_pages == 0) {
-        ZF_LOGF("No stack");
-    }
+    ZF_LOGF_IF(init_data->stack_pages == 0, "No stack");
     int i;
     for (i = 0; i < init_data->stack_pages; i++) {
         existing_frames[i + 3] = init_data->stack + (i * PAGE_SIZE_4K);
@@ -164,17 +160,11 @@ receive_init_data(seL4_CPtr endpoint)
     info = seL4_Recv(endpoint, &badge);
 
     /* check the label is correct */
-    if (seL4_MessageInfo_get_length(info) != 1) {
-        ZF_LOGF("Incorrect Label");
-    }
+    ZF_LOGF_IF(seL4_MessageInfo_get_length(info) != 1, "Incorrect Label");
 
     init_data_t *init_data = (init_data_t *) seL4_GetMR(0);
-    if (init_data->free_slots.start == 0) {
-        ZF_LOGF("Bad init data");
-    }
-    if (init_data->free_slots.end == 0) {
-        ZF_LOGF("Bad init data");
-    }
+    ZF_LOGF_IF(init_data->free_slots.start == 0, "Bad init data");
+    ZF_LOGF_IF(init_data->free_slots.end == 0, "Bad init data");
 
     return init_data;
 }

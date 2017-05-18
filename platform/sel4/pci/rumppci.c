@@ -141,9 +141,7 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 {
     if (env.caps[intrs[cookie]] == 0) {
         int error = vka_cspace_alloc(&env.vka, &env.caps[intrs[cookie]]);
-        if (error != 0) {
-            ZF_LOGF("Failed to allocate cslot, error %d", error);
-        }
+        ZF_LOGF_IF(error != 0, "Failed to allocate cslot, error %d", error);
         cspacepath_t path;
         vka_cspace_make_path(&env.vka, env.caps[intrs[cookie]], &path);
 
@@ -185,25 +183,17 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 #else /* using PIC */
 
         error = seL4_IRQControl_Get(simple_get_irq_ctrl(&env.simple),  intrs[cookie], path.root, path.capPtr, path.capDepth);
-        if (error != 0) {
-            ZF_LOGF("Failed to get IRQControl\n");
-        }
+        ZF_LOGF_IF(error != 0, "Failed to get IRQControl\n");
         error = seL4_IRQHandler_Ack(env.caps[intrs[cookie]]);
-        if (error != 0) {
-            ZF_LOGF("Failed to ack IRQ handler\n");
-        }
+        ZF_LOGF_IF(error != 0, "Failed to ack IRQ handler\n");
 #endif /* CONFIG_IRQ_IOAPIC */
 
         cspacepath_t path2;
         error = vka_mint_object(&env.vka, &env.pci_notification, &path2,
                                 seL4_AllRights, seL4_CapData_Badge_new(1 << (intrs[cookie])));
-        if (error != 0) {
-            ZF_LOGF("Failed to mint notification object\n");
-        }
+        ZF_LOGF_IF(error != 0, "Failed to mint notification object\n");
         error = seL4_IRQHandler_SetNotification(env.caps[intrs[cookie]], path2.capPtr);
-        if (error != 0) {
-            ZF_LOGF("Failed to bind IRQ to notification\n");
-        }
+        ZF_LOGF_IF(error != 0, "Failed to bind IRQ to notification\n");
     }
 
     bmk_isr_rumpkernel(handler, data, intrs[cookie], BMK_INTR_ROUTED);
@@ -226,9 +216,7 @@ rumpcomp_pci_map(unsigned long addr, unsigned long len)
             break;
         }
     }
-    if (i == NUM_PCI_MAPPINGS) {
-        ZF_LOGF("ERROR: Overwrote memory\n");
-    }
+    ZF_LOGF_IF(i == NUM_PCI_MAPPINGS, "ERROR: Overwrote memory\n");
 #endif /* TRACK_PCI_MAPPINGS */
     return vaddr;
 }
@@ -246,9 +234,7 @@ rumpcomp_pci_unmap(void *addr)
             break;
         }
     }
-    if (i == NUM_PCI_MAPPINGS) {
-        ZF_LOGF("ERROR: Cannot find entry\n");
-    }
+    ZF_LOGF_IF(i == NUM_PCI_MAPPINGS, "ERROR: Cannot find entry\n");
 #endif /* TRACK_PCI_MAPPINGS */
     ZF_LOGD("\trumpcomp_pci_unmap: addr 0x%p len %d\n", addr, len);
     return ps_io_unmap(&env.io_ops.io_mapper, addr, len);
