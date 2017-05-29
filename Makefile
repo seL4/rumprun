@@ -8,9 +8,9 @@
 # @TAG(DATA61_BSD)
 #
 
-# We use a second build directory for rump objects.
+PROJECT_BASE := $(PWD)
+include $(SOURCE_DIR)/platform/sel4/rumprunlibs.mk
 ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
-BUILD2_DIR = $(shell $(call ABS_TO_REL,$(PROJECT_BASE)/build2,$(SOURCE_DIR)))
 
 # Save the path
 PATH2 := ${PATH}
@@ -53,13 +53,14 @@ endif
 
 SEL4_INSTALL_HEADERS := $(SOURCE_DIR)/platform/sel4/include/sel4/rumprun
 
-
 rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
-	cd $(SOURCE_DIR) && env -i PATH=${PATH2} PROJECT_BASE=$(PROJECT_BASE) CC=gcc ./build-rr.sh \
-	-d $(BUILD2_DIR)/$(SEL4_ARCH)/rumprun -o $(BUILD2_DIR)/$(SEL4_ARCH)/sel4-obj sel4 -- $(RUMPKERNEL_FLAGS)
+	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=gcc ./build-rr.sh \
+	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(SOURCE_DIR))) \
+	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(SOURCE_DIR))) \
+	sel4 -- $(RUMPKERNEL_FLAGS)
 	@echo " [rumprun] rebuilt rumprun sel4"
 	touch rumpsel4
 

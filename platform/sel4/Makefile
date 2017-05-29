@@ -61,31 +61,31 @@ ${RROBJ}/platform/%.o: %.c
 	$(Q)$(call make-depend,$<,$@,$(patsubst %.o,%.d,$@))
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $< -o $@
 
-${RROBJ}/platform/%.o: %.S
-	$(Q)$(call make-depend,$<,$@,$(patsubst %.o,%.d,$@))
-	${CC} -D_LOCORE ${CPPFLAGS} ${CFLAGS} -c $< -o $@
 
-SEL4LIBS = muslc sel4 cpio elf sel4muslcsys sel4vka sel4allocman \
-       platsupport sel4platsupport sel4vspace \
-       sel4utils sel4simple utils sel4debug sel4simple-default
+include rumprunlibs.mk
+
+ifneq ($(abspath $(MAINOBJ)),$(abspath $(BASEFILE)))
+$(error $(BASEFILE) does not equal $(MAINOBJ). ${PWD})
+endif
+
+
+${INTERMEDIATE_BASEFILE}: ${OBJS} platformlibs
+	echo "Building: $(INTERMEDIATE_BASEFILE)"
+	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
 
 SEL4_LIBDIR = $(PROJECT_BASE)/stage/x86/pc99/lib
 CRTOBJFILES ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o
 FINOBJFILES ?= $(SEL4_LIBDIR)/crtn.o
 
 # Look away now
-${MAINOBJ}: ${OBJS} platformlibs
+${MAINOBJ}: ${INTERMEDIATE_BASEFILE}
 	echo "Building: $(MAINOBJ): $(CFLAGS)"
 	# Generate the rumprun.o object file that is linked against apps that want to use rumprun.
 	# --whole-archive is used to ensure constructor symbols are included from some libraries
 	# --start-group because seL4 libraries have circular dependencies
-	${CC} -nostdlib ${CFLAGS} -Wl,-r ${CRTOBJFILES} ${OBJS} ${FINOBJFILES} -o $@ \
-	    -L${RROBJLIB}/libbmk_core -L${RROBJLIB}/libbmk_rumpuser -L$(SEL4_LIBDIR) \
-	    -Wl,--undefined=__vsyscall_ptr -Wl,--start-group $(SEL4LIBS:%=-l%) \
-		-Wl,--end-group -Wl,--whole-archive -lbmk_rumpuser -lbmk_core -Wl,--no-whole-archive -Wl,-dT stage1.lds
+	${CC} -nostdlib ${CFLAGS} ${CRTOBJFILES} ${INTERMEDIATE_BASEFILE} ${FINOBJFILES} -o $@ ${MAINOBJ_LD_FLAGS}
 	# Objcopy is used to promote all -G symbols to global symbols while hiding all other symbols.
-	${OBJCOPY} -w -G bmk_* -G rumpuser_* -G jsmn_* -G __assert_fail \
-	     -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write -G _zf_log_output_lvl $@
+	${BASEFILE_OBJCOPY} $@
 
 clean: commonclean
 	rm -f ${OBJS_BMK} include/sel4/machine buildtest ${MAINOBJ}
