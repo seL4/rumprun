@@ -74,8 +74,9 @@ ${INTERMEDIATE_BASEFILE}: ${OBJS} platformlibs
 	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
 
 SEL4_LIBDIR = $(PROJECT_BASE)/stage/x86/pc99/lib
-CRTOBJFILES ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o
-FINOBJFILES ?= $(SEL4_LIBDIR)/crtn.o
+MAINOBJ_LD_FLAGS := $(SEL4_LIBDIR:%=-L%) $(SEL4LIBS:%=-l%) $(BASEFILE_LD_FLAGS)
+CRTOBJFILES ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
+FINOBJFILES ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
 
 # Look away now
 ${MAINOBJ}: ${INTERMEDIATE_BASEFILE}
