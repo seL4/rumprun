@@ -227,7 +227,15 @@ provide_vmem(env_t env)
 
     bmk_core_init(BMK_THREAD_STACK_PAGE_ORDER);
 
-    osend = vspace_new_pages(&env->vspace, seL4_CapRights_new(1, 1, 1), NUM_PAGES_FOR_ME, 12);
+    vspace_new_pages_config_t config;
+    if (default_vspace_new_pages_config(NUM_PAGES_FOR_ME, 12, &config)) {
+        ZF_LOGF("Failed to create config");
+    }
+    if (vspace_new_pages_config_use_device_ut(true, &config)) {
+        ZF_LOGF("Failed to set device_ram");
+    }
+
+    osend = vspace_new_pages_with_config(&env->vspace, &config, seL4_CapRights_new(1, 1, 1));
     if (osend == NULL) {
         ZF_LOGF("vspace returned null");
     }
