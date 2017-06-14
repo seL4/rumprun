@@ -26,6 +26,13 @@
 
 #define MAX_REGIONS 4
 
+typedef struct {
+    uint8_t untyped_size_bits;
+    /* ALLOCMAN_UT_KERNEL, ALLOCMAN_UT_DEV, ALLOCMAN_UT_DEV_MEM */
+    uint8_t untyped_is_device;
+    uintptr_t untyped_paddr;
+} cap_descriptor_t;
+
 /* data shared between root task and the rumprun app.
  * all caps are in the rumprun process' cspace */
 typedef struct {
@@ -52,7 +59,7 @@ typedef struct {
     seL4_CPtr timer_frame;
     /* cap to the sel4platsupport default timer io port */
     seL4_CPtr io_port;
-
+    int timer_slot_index;
     /* size of the rumprun process' cspace */
     seL4_Word cspace_size_bits;
     /* range of free slots in the cspace */
@@ -61,17 +68,8 @@ typedef struct {
 
     /* range of untyped memory in the cspace */
     seL4_SlotRegion untypeds;
-    /* size of untyped that each untyped cap corresponds to
-     * (size of the cap at untypeds.start is untyped_size_bits_lits[0]) */
-    uint8_t untyped_size_bits_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
-    uintptr_t untyped_paddr_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
+    cap_descriptor_t untyped_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
 
-    seL4_SlotRegion devices;
-    uint8_t device_size_bits_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
-    uintptr_t device_paddr_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
-
-    /* name of the test to run */
-    char name[APP_NAME_MAX];
     /* Rump cmdline */
     char cmdline[RUMP_CONFIG_MAX];
 

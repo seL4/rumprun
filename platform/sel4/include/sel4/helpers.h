@@ -65,7 +65,6 @@ typedef struct env *env_t;
 
 extern struct env env;
 
-
+int arch_init_timer(env_t env, init_data_t *init_data);
 void arch_init_simple(simple_t *simple);
 void x86_initclocks(void);
-

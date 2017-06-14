@@ -40,6 +40,7 @@
 
 #include <utils/util.h>
 #include <platsupport/arch/tsc.h>
+#include <platsupport/timer.h>
 #include <bmk-core/core.h>
 #include <bmk-core/platform.h>
 #include <bmk-core/printf.h>
@@ -106,6 +107,13 @@ x86_initclocks(void)
 
     tsc_mult = (NSEC_PER_SEC << 32) / tsc_freq;
     time_base = mul64_32(tsc_base, tsc_mult);
+    int error = timer_start(env.timer->timer);
+    if (error){
+        ZF_LOGF("Failed to start default timer");
+
+    }
+    sel4_timer_handle_single_irq(env.timer);
+
     return;
 }
 

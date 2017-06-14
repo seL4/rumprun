@@ -1,7 +1,7 @@
-From 6c1fbbc49a5a6d3bae883e43de7300b78f197da9 Mon Sep 17 00:00:00 2001
+From 5dce554ad2f55a340ba57337ed91fc7663025a23 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@Data61.csiro.au>
 Date: Tue, 14 Feb 2017 15:10:12 +1100
-Subject: [PATCH 1/5] rump: Add additional rumppci compatiblity functions
+Subject: [PATCH 1/2] rump: Add additional rumppci compatiblity functions
 
 ---
  sys/rump/dev/lib/libpci/pci_user.h          |  4 ++++
@@ -9,7 +9,7 @@ Subject: [PATCH 1/5] rump: Add additional rumppci compatiblity functions
  2 files changed, 19 insertions(+), 9 deletions(-)
 
 diff --git a/sys/rump/dev/lib/libpci/pci_user.h b/sys/rump/dev/lib/libpci/pci_user.h
-index 75ddcbb..08aed24 100644
+index 75ddcbb6..08aed242 100644
 --- a/sys/rump/dev/lib/libpci/pci_user.h
 +++ b/sys/rump/dev/lib/libpci/pci_user.h
 @@ -12,12 +12,16 @@
@@ -30,7 +30,7 @@ index 75ddcbb..08aed24 100644
  int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long *, unsigned long *);
  #ifdef RUMPCOMP_USERFEATURE_PCI_DMAFREE
 diff --git a/sys/rump/dev/lib/libpci/rumpdev_bus_space.c b/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
-index 8d97ea0..3e4cc6b 100644
+index 8d97ea0d..3e4cc6ba 100644
 --- a/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
 +++ b/sys/rump/dev/lib/libpci/rumpdev_bus_space.c
 @@ -75,8 +75,10 @@ bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh,
@@ -113,5 +113,5 @@ index 8d97ea0..3e4cc6b 100644
  
  void
 -- 
-2.7.4
+2.11.0
 

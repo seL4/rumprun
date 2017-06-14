@@ -17,8 +17,6 @@
 #include <allocman/vka.h>
 #include <allocman/bootstrap.h>
 #include <sel4platsupport/timer.h>
-#include <sel4platsupport/plat/timer.h>
-#include <sel4platsupport/plat/pit.h>
 
 #include <sel4platsupport/io.h>
 #include <sel4utils/iommu_dma.h>
@@ -34,7 +32,6 @@
 #include <bmk-core/sched.h>
 #include <bmk-core/mainthread.h>
 #include <sel4platsupport/platsupport.h>
-
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
 #include <rumprun/init_data.h>
@@ -114,31 +111,22 @@ init_allocator(env_t env, init_data_t *init_data)
 
     /* fill the allocator with untypeds */
     seL4_CPtr slot;
-    unsigned int size_bits_index;
-    for (slot = init_data->untypeds.start, size_bits_index = 0;
+    unsigned int index;
+    for (slot = init_data->untypeds.start, index = 0;
             slot <= init_data->untypeds.end;
-            slot++, size_bits_index++) {
+            slot++, index++) {
 
         cspacepath_t path;
         vka_cspace_make_path(&env->vka, slot, &path);
-        uintptr_t paddr = init_data->untyped_paddr_list[size_bits_index];
-        size_t size_bits = init_data->untyped_size_bits_list[size_bits_index];
-        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, ALLOCMAN_UT_KERNEL);
+        uintptr_t paddr = init_data->untyped_list[index].untyped_paddr;
+        size_t size_bits = init_data->untyped_list[index].untyped_size_bits;
+        uint8_t device_type = init_data->untyped_list[index].untyped_is_device;
+        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, device_type);
         if (error) {
             ZF_LOGF("Failed to add untyped objects to allocator");
         }
     }
-    for (int i = 0; i < (init_data->devices.end - init_data->devices.start); i++) {
-        cspacepath_t path;
-        vka_cspace_make_path(&env->vka, init_data->devices.start + i, &path);
-        uintptr_t paddr = init_data->device_paddr_list[i];
-        size_t size_bits = init_data->device_size_bits_list[i];
 
-        error = allocman_utspace_add_uts(allocator, 1, &path, &size_bits, &paddr, ALLOCMAN_UT_DEV);
-        if (error) {
-            ZF_LOGF("Failed to add untyped objects to allocator");
-        }
-    }
     /* create a vspace */
     void *existing_frames[init_data->stack_pages + 3];
     existing_frames[0] = (void *) init_data;
@@ -175,49 +163,24 @@ init_allocator(env_t env, init_data_t *init_data)
 
 }
 
-static seL4_Error
-get_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
-{
-    init_data_t *init = (init_data_t *) data;
-    if (irq != DEFAULT_TIMER_INTERRUPT) {
-        ZF_LOGF("Incorrect interrupt number");
-    }
-
-    int error = seL4_CNode_Copy(root, index, depth, init->root_cnode,
-                                init->timer_irq, seL4_WordBits, seL4_AllRights);
-    if (error != 0) {
-        ZF_LOGF("Failed to copy irq cap\n");
-    }
-
-    return error;
-}
 
 static void init_timer(env_t env, init_data_t *init_data)
 {
-    /* minimal simple implementation to get the platform
-     * default timer off the ground */
-    env->simple.arch_simple.irq = get_irq;
-    env->simple.data = (void *) init_data;
-    env->simple.arch_simple.data = (void *) init_data;
 
     UNUSED int error;
 
-    arch_init_simple(&env->simple);
+    // arch_init_simple(&env->simple);
 
     error = vka_alloc_notification(&env->vka, &env->timer_notification);
     if (error != 0) {
         ZF_LOGF("Failed to allocate notification object");
     }
-    /* FIXME Make this more platform agnostic */
-#ifdef CONFIG_IRQ_IOAPIC
-    env->timer = sel4platsupport_get_default_timer(&env->vka, &env->vspace,
-                                                   &env->simple, env->timer_notification.cptr);
-#else
-    env->timer = sel4platsupport_get_pit(&env->vka, &env->simple, NULL, env->timer_notification.cptr);
-#endif
-    if (env->timer == NULL) {
-        ZF_LOGF("Failed to initialise default timer");
+
+    error = arch_init_timer(env, init_data);
+    if (error != 0) {
+        ZF_LOGF("arch_init_timer failed");
     }
+
 }
 
 static void
@@ -317,6 +280,11 @@ int main(int argc, char **argv)
     init_allocator(&env, init_data);
     int res;
     /* initialise the timer */
+    env.simple.data = (void *) init_data;
+
+
+    arch_init_simple(&env.simple);
+
     init_timer(&env, init_data);
     /* initialise serial
         prints before here _may_ crash the system */

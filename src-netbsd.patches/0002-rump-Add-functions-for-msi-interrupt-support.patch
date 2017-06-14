@@ -1,0 +1,94 @@
+From 3647f534a9785a9884172d3771d3acf1258d7a96 Mon Sep 17 00:00:00 2001
+From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
+Date: Wed, 14 Jun 2017 23:02:52 +1000
+Subject: [PATCH 2/2] rump: Add functions for msi interrupt support
+
+---
+ sys/rump/dev/lib/libpci/pci_user.h    |  1 +
+ sys/rump/dev/lib/libpci/rumpdev_pci.c | 51 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
+
+diff --git a/sys/rump/dev/lib/libpci/pci_user.h b/sys/rump/dev/lib/libpci/pci_user.h
+index 08aed242..132792a4 100644
+--- a/sys/rump/dev/lib/libpci/pci_user.h
++++ b/sys/rump/dev/lib/libpci/pci_user.h
+@@ -22,6 +22,7 @@ void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);
+ int rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val);
+ int rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result);
+ 
++int rumpcomp_pci_intr_type(void);
+ /* XXX: needs work: support boundary-restricted allocations */
+ int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long *, unsigned long *);
+ #ifdef RUMPCOMP_USERFEATURE_PCI_DMAFREE
+diff --git a/sys/rump/dev/lib/libpci/rumpdev_pci.c b/sys/rump/dev/lib/libpci/rumpdev_pci.c
+index 249076ab..f6cf8745 100644
+--- a/sys/rump/dev/lib/libpci/rumpdev_pci.c
++++ b/sys/rump/dev/lib/libpci/rumpdev_pci.c
+@@ -50,6 +50,16 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+ 	return 32;
+ }
+ 
++pci_intr_type_t
++pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
++{
++    if (rumpcomp_pci_intr_type() == 1) {
++        return PCI_INTR_TYPE_MSI;
++    } else {
++        return PCI_INTR_TYPE_INTX;
++    }
++}
++
+ pcitag_t
+ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
+ {
+@@ -147,6 +157,47 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+ 	return rumpcomp_pci_irq_establish(ih, func, arg);
+ }
+ 
++void *
++pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
++    int level, int (*func)(void *), void *arg, const char *__nouse)
++{
++    void *addr = pci_intr_establish(pc, ih, level, func, arg);
++
++    /* set up MSI here if required */
++    if (pci_intr_type(pc, ih) == PCI_INTR_TYPE_MSI) {
++        pcitag_t tag = pci_make_tag(pc, 3, 0, 0);
++
++        int offset;
++        pcireg_t reg;
++        int err = pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, &reg);
++        if (err == 0) {
++            printf("Failed to get MSI cap\n");
++        } else {
++            printf("MSI cap at offset %d, CTL reg %08x\n", offset, reg);
++        }
++
++        /* enable MSI */
++        reg |= PCI_MSI_CTL_MSI_ENABLE;
++        pci_conf_write(pc, tag, offset + PCI_MSI_CTL, reg);
++
++        /* check MSI address register */
++        reg = pci_conf_read(pc, tag, offset + PCI_MSI_MADDR64_LO);
++        printf("MSI MADDR: %08x\n", reg);
++        /* set fixed address 0xFEE */
++        reg |= (0xfee << 20);
++        pci_conf_write(pc, tag, offset + PCI_MSI_MADDR64_LO, reg);
++
++        /* set MSI interrupr vector */
++        reg = pci_conf_read(pc, tag, offset + PCI_MSI_MDATA64);
++        printf("MSI MDATA: %08x\n", reg);
++        /* set interrupt vector */
++        reg |= (54 << 0);
++        pci_conf_write(pc, tag, offset + PCI_MSI_MDATA64, reg);
++    }
++
++    return addr;
++}
++
+ int
+ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+ 	int attr, uint64_t data)
+-- 
+2.11.0
+
