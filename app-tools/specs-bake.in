@@ -1,5 +1,5 @@
 *startfile:
-!DESTDIR!/rumprun-!MACHINE_GNU_ARCH!/lib/rumprun-!PLATFORM!/rumprun.o
+%:getenv(RUMPRUN_BASEDIR /rumprun.o)
 
 *endfile:
 
