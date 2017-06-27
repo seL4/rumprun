@@ -1,0 +1,51 @@
+/*
+ * Copyright 2017, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the BSD 2-Clause license. Note that NO WARRANTY is provided.
+ * See "LICENSE_BSD2.txt" for details.
+ *
+ * @TAG(DATA61_BSD)
+ */
+
+import <std_connector.camkes>;
+import <global-connectors.camkes>;
+
+import <TimeServer/TimeServer.camkes>;
+import <SerialServer/SerialServer.camkes>;
+import <PCIConfigIO/PCIConfigIO.camkes>;
+
+
+struct RumprunConfig {
+    string rumprunbake_config = "sel4_generic";
+    string cmdline;
+    int rump_net = 0;
+    int rumprun_memory_size = 16 * 1024 * 1024;
+    string pci_config_interface = "";
+    string eth_irq_interface = "";
+    string timer_interface = "platform_timer";
+    string serial_interface = "platform_putchar";
+    int eth_irq_number = -1;
+    string interfaces_to_expose[] = [];
+}
+
+component rumprun_platform_layer {
+    provides Timer timer;
+    provides PutChar putchar;
+
+    composition {
+        component SerialServer serial;
+        component TimeServer time_server;
+
+        connection seL4TimeServer serialserver_timer(from serial.timeout, to time_server.the_timer);
+
+        export serial.processed_putchar -> putchar;
+        export time_server.the_timer -> timer;
+    }
+    configuration {
+        time_server.timers_per_client = 1;
+        serial.timeout_attributes = 1;
+    }
+}
