@@ -53,7 +53,15 @@ endif
 
 SEL4_INSTALL_HEADERS := $(SOURCE_DIR)/platform/sel4/include/sel4/rumprun
 
-rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config
+# Rule for update sources on first build
+# Note: This creates a stamp file in the top level source directory
+$(SOURCE_DIR)/.rumpstamp:
+	cd $(SOURCE_DIR) && git submodule init
+	cd $(SOURCE_DIR) && git submodule update
+	cd $(SOURCE_DIR)/src-netbsd && git am ../src-netbsd.patches/*
+	touch $@
+
+rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
