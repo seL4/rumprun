@@ -13,4 +13,4 @@ libs-$(CONFIG_RUMPRUN) += rumprun
 
 rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
        libplatsupport libsel4platsupport libsel4vspace \
-       libsel4utils libsel4simple libutils libsel4debug
+       libsel4utils libsel4simple libutils libsel4debug libsel4sync

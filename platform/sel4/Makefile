@@ -61,7 +61,9 @@ ${RROBJ}/platform/%.o: %.c
 	$(Q)$(call make-depend,$<,$@,$(patsubst %.o,%.d,$@))
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $< -o $@
 
-
+# Base directory of rumprun.  Will always be two directories higher than this.
+# This variable is used in rumprunlibs.mk
+RUMPRUN_BASE_DIR:= ../../
 include rumprunlibs.mk
 
 ifneq ($(abspath $(MAINOBJ)),$(abspath $(BASEFILE)))

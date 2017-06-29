@@ -15,7 +15,7 @@ ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
 # Save the path
 PATH2 := ${PATH}
 # All rumprun source directories.
-SRC_DIRECTORIES := app-tools buildrump.sh include lib platform src-netbsd ../libs
+SRC_DIRECTORIES := app-tools buildrump.sh include lib platform src-netbsd
 # Find all source rump files.
 RUMPFILES += $(shell find -L $(SRC_DIRECTORIES:%=$(SOURCE_DIR)/%) \( -type f \))
 RUMPFILES += $(shell find $(SOURCE_DIR) -maxdepth 1 -type f)
@@ -41,15 +41,10 @@ endif
 #Build for release and 32 bit.
 RUMPKERNEL_FLAGS+= -r
 
-ifeq ($(RTARGET), sel4)
 #Change TLS model to avoid unnecessary seL4 invocations.
 RUMPKERNEL_FLAGS+= -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic
 all: rumpsel4
 	echo " [rumprun] done"
-else
-all:rumphw
-	echo " [rumprun] done"
-endif
 
 SEL4_INSTALL_HEADERS := $(SOURCE_DIR)/platform/sel4/include/sel4/rumprun
 
