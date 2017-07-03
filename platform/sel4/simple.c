@@ -99,13 +99,13 @@ static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits
 
     if(n < (init_data->untypeds.end - init_data->untypeds.start)) {
         if(paddr != NULL) {
-            *paddr = init_data->untyped_list[n].untyped_paddr;
+            *paddr = init_data->untyped_list[n].paddr;
         }
         if(size_bits != NULL) {
-            *size_bits = init_data->untyped_list[n].untyped_size_bits;
+            *size_bits = init_data->untyped_list[n].size_bits;
         }
         if (device != NULL) {
-            uint8_t custom_device = init_data->untyped_list[n].untyped_is_device;
+            uint8_t custom_device = init_data->untyped_list[n].is_device;
             *device = custom_device ==ALLOCMAN_UT_KERNEL ? 0 : 1;
         }
         return init_data->untypeds.start + (n);
@@ -205,12 +205,12 @@ int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem
     init_data_t *init_data = custom_simple->simple->data;
     int j = 0;
     for (int i = 0; i < (init_data->untypeds.end - init_data->untypeds.start); i++) {
-        uint8_t custom_device = init_data->untyped_list[i].untyped_is_device;
+        uint8_t custom_device = init_data->untyped_list[i].is_device;
         if (custom_device == ALLOCMAN_UT_DEV_MEM) {
             pmem_region_t region = {
                 .type = PMEM_TYPE_RAM,
-                .base_addr = init_data->untyped_list[i].untyped_paddr,
-                .length = BIT(init_data->untyped_list[i].untyped_size_bits),
+                .base_addr = init_data->untyped_list[i].paddr,
+                .length = BIT(init_data->untyped_list[i].size_bits),
             };
             regions[j] = region;
             j++;

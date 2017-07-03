@@ -28,11 +28,11 @@
 #define MAX_REGIONS 4
 
 typedef struct {
-    uint8_t untyped_size_bits;
+    uint8_t size_bits;
     /* ALLOCMAN_UT_KERNEL, ALLOCMAN_UT_DEV, ALLOCMAN_UT_DEV_MEM */
-    uint8_t untyped_is_device;
-    uintptr_t untyped_paddr;
-} cap_descriptor_t;
+    uint8_t is_device;
+    uintptr_t paddr;
+} untyped_descriptor_t;
 
 /* data shared between root task and the rumprun app.
  * all caps are in the rumprun process' cspace */
@@ -69,7 +69,7 @@ typedef struct {
 
     /* range of untyped memory in the cspace */
     seL4_SlotRegion untypeds;
-    cap_descriptor_t untyped_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
+    untyped_descriptor_t untyped_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
 
     /* Rump cmdline */
     char cmdline[RUMP_CONFIG_MAX];
