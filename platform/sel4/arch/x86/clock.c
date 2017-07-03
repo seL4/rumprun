@@ -113,7 +113,7 @@ x86_initclocks(void)
     time_base = mul64_32(tsc_base, tsc_mult);
     if (is_hw_timer(&env.custom_simple)) {
         int error = timer_start(env.timer->timer);
-        if (error){
+        if (error) {
             ZF_LOGF("Failed to start default timer");
 
         }

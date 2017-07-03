@@ -16,7 +16,8 @@
 #include <allocman/utspace/utspace.h>
 #include <rumprun/custom_simple.h>
 
-static int simple_default_cap_count(void *data) {
+static int simple_default_cap_count(void *data)
+{
     assert(data);
 
     init_data_t * init_data = data;
@@ -25,88 +26,92 @@ static int simple_default_cap_count(void *data) {
 }
 
 
-static seL4_CPtr simple_default_init_cap(void *data, seL4_CPtr cap_pos) {
+static seL4_CPtr simple_default_init_cap(void *data, seL4_CPtr cap_pos)
+{
     init_data_t *init_data = data;
     switch (cap_pos) {
-        case seL4_CapNull:  /* null cap */
-            return seL4_CapNull;
+    case seL4_CapNull:  /* null cap */
+        return seL4_CapNull;
         break;
-        case seL4_CapInitThreadTCB: /* initial thread's TCB cap */
-            return init_data->tcb;
+    case seL4_CapInitThreadTCB: /* initial thread's TCB cap */
+        return init_data->tcb;
         break;
-        case seL4_CapInitThreadCNode: /* initial thread's root CNode cap */
-            return init_data->root_cnode;
+    case seL4_CapInitThreadCNode: /* initial thread's root CNode cap */
+        return init_data->root_cnode;
         break;
-        case seL4_CapInitThreadVSpace: /* initial thread's VSpace cap */
-            return init_data->page_directory;
+    case seL4_CapInitThreadVSpace: /* initial thread's VSpace cap */
+        return init_data->page_directory;
         break;
-        case seL4_CapIRQControl: /* global IRQ controller cap */
-            return init_data->irq_control;
+    case seL4_CapIRQControl: /* global IRQ controller cap */
+        return init_data->irq_control;
         break;
-        case seL4_CapASIDControl: /* global ASID controller cap */
-            ZF_LOGF("No ASIDControl cap provided");
-            return seL4_CapNull;
+    case seL4_CapASIDControl: /* global ASID controller cap */
+        ZF_LOGF("No ASIDControl cap provided");
+        return seL4_CapNull;
         break;
-        case seL4_CapInitThreadASIDPool: /* initial thread's ASID pool cap */
-            ZF_LOGF("No InitThreadASIDPool cap provided");
-            return seL4_CapNull;
+    case seL4_CapInitThreadASIDPool: /* initial thread's ASID pool cap */
+        ZF_LOGF("No InitThreadASIDPool cap provided");
+        return seL4_CapNull;
         break;
-        case seL4_CapIOPort: /* global IO port cap (null cap if not supported) */
-            return init_data->io_port;
+    case seL4_CapIOPort: /* global IO port cap (null cap if not supported) */
+        return init_data->io_port;
         break;
-        case seL4_CapIOSpace: /* global IO space cap (null cap if no IOMMU support) */
-            ZF_LOGE("This shouldn't be currently supported");
+    case seL4_CapIOSpace: /* global IO space cap (null cap if no IOMMU support) */
+        ZF_LOGE("This shouldn't be currently supported");
 #ifdef CONFIG_IOMMU
-            return init_data->io_space;
+        return init_data->io_space;
 #else
-            return seL4_CapNull;
+        return seL4_CapNull;
 #endif
         break;
-        case seL4_CapBootInfoFrame: /* bootinfo frame cap */
-            ZF_LOGF("No InitThreadASIDPool cap provided");
-            return seL4_CapNull;
+    case seL4_CapBootInfoFrame: /* bootinfo frame cap */
+        ZF_LOGF("No InitThreadASIDPool cap provided");
+        return seL4_CapNull;
         break;
-        case seL4_CapInitThreadIPCBuffer: /* initial thread's IPC buffer frame cap */
-            ZF_LOGF("No InitThreadIPCBuffer cap provided");
-            return seL4_CapNull;
+    case seL4_CapInitThreadIPCBuffer: /* initial thread's IPC buffer frame cap */
+        ZF_LOGF("No InitThreadIPCBuffer cap provided");
+        return seL4_CapNull;
         break;
-        case seL4_CapDomain: /* global domain controller cap */
-            ZF_LOGF("No Domain cap provided");
-            return seL4_CapNull;
+    case seL4_CapDomain: /* global domain controller cap */
+        ZF_LOGF("No Domain cap provided");
+        return seL4_CapNull;
         break;
-        default:
-            ZF_LOGF("Invalid init cap provided");
+    default:
+        ZF_LOGF("Invalid init cap provided");
     }
     return seL4_CapNull;
 }
 
-static uint8_t simple_default_cnode_size(void *data) {
+static uint8_t simple_default_cnode_size(void *data)
+{
     assert(data);
 
     return ((init_data_t *)data)->cspace_size_bits;
 }
 
-static int simple_default_untyped_count(void *data) {
+static int simple_default_untyped_count(void *data)
+{
     assert(data);
 
     return ((init_data_t *)data)->untypeds.end - ((init_data_t *)data)->untypeds.start;
 }
 
-static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits, uintptr_t *paddr, bool *device) {
+static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits, uintptr_t *paddr, bool *device)
+{
     assert(data && size_bits && paddr);
 
     init_data_t *init_data = data;
 
-    if(n < (init_data->untypeds.end - init_data->untypeds.start)) {
-        if(paddr != NULL) {
+    if (n < (init_data->untypeds.end - init_data->untypeds.start)) {
+        if (paddr != NULL) {
             *paddr = init_data->untyped_list[n].paddr;
         }
-        if(size_bits != NULL) {
+        if (size_bits != NULL) {
             *size_bits = init_data->untyped_list[n].size_bits;
         }
         if (device != NULL) {
             uint8_t custom_device = init_data->untyped_list[n].is_device;
-            *device = custom_device ==ALLOCMAN_UT_KERNEL ? 0 : 1;
+            *device = custom_device == ALLOCMAN_UT_KERNEL ? 0 : 1;
         }
         return init_data->untypeds.start + (n);
     }
@@ -115,25 +120,28 @@ static seL4_CPtr simple_default_nth_untyped(void *data, int n, size_t *size_bits
 }
 
 
-static seL4_CPtr simple_default_nth_cap(void *data, int n) {
+static seL4_CPtr simple_default_nth_cap(void *data, int n)
+{
     return n;
 }
 
 
-static seL4_Word simple_default_arch_info(void *data) {
+static seL4_Word simple_default_arch_info(void *data)
+{
     ZF_LOGE_IF(data == NULL, "Data is null!");
 
     return ((init_data_t *)data)->tsc_freq;
 }
 
 int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
-                            vka_t *vka) {
+                                          vka_t *vka)
+{
     if (custom_simple->camkes) {
         void *existing_frames_camkes[] = {
             NULL
         };
         return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(custom_simple->simple), vka,
-                                           NULL, NULL, existing_frames_camkes);
+                                          NULL, NULL, existing_frames_camkes);
 
     }
     init_data_t *init_data = custom_simple->simple->data;
@@ -148,15 +156,17 @@ int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace
     }
     existing_frames[i + 3] = NULL;
     return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(custom_simple->simple), vka,
-                                       NULL, NULL, existing_frames);
+                                      NULL, NULL, existing_frames);
 
 }
 
-int custom_get_priority(custom_simple_t *custom_simple) {
+int custom_get_priority(custom_simple_t *custom_simple)
+{
     return custom_simple->priority;
 }
 
-const char *custom_get_cmdline(custom_simple_t *custom_simple) {
+const char *custom_get_cmdline(custom_simple_t *custom_simple)
+{
     return custom_simple->cmdline;
 
 }
@@ -181,7 +191,8 @@ receive_init_data(seL4_CPtr endpoint)
     return init_data;
 }
 
-int custom_get_num_regions(custom_simple_t *custom_simple) {
+int custom_get_num_regions(custom_simple_t *custom_simple)
+{
     if (custom_simple->camkes) {
         return 0;
     }
@@ -198,7 +209,8 @@ int custom_get_num_regions(custom_simple_t *custom_simple) {
 
 }
 
-int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem_region_t *regions) {
+int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem_region_t *regions)
+{
     if (custom_simple->camkes) {
         return 0;
     }
@@ -223,7 +235,8 @@ int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem
     return j;
 }
 
-void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint) {
+void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
+{
     init_data_t *init_data = receive_init_data(endpoint);
     assert(init_data);
     simple_t *simple = custom_simple->simple;

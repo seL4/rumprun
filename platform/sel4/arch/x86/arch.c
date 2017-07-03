@@ -49,12 +49,12 @@ get_timer_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t dep
 
 static seL4_Error
 get_timer_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
-        UNUSED seL4_Word pci_bus, UNUSED seL4_Word pci_dev, UNUSED seL4_Word pci_func,
-        UNUSED seL4_Word handle, seL4_Word vector)
+              UNUSED seL4_Word pci_bus, UNUSED seL4_Word pci_dev, UNUSED seL4_Word pci_func,
+              UNUSED seL4_Word handle, seL4_Word vector)
 {
     init_data_t *init = (init_data_t *) data;
     int error = seL4_CNode_Copy(root, index, depth, init->root_cnode,
-            init->timer_irq, seL4_WordBits, seL4_AllRights);
+                                init->timer_irq, seL4_WordBits, seL4_AllRights);
     assert(error == seL4_NoError);
     return seL4_NoError;
 }
@@ -62,11 +62,11 @@ get_timer_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
 
 static seL4_Error
 get_timer_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, seL4_Word ioapic,
-           seL4_Word pin, seL4_Word level, seL4_Word polarity, seL4_Word vector)
+                 seL4_Word pin, seL4_Word level, seL4_Word polarity, seL4_Word vector)
 {
     init_data_t *init = (init_data_t *) data;
     int error = seL4_CNode_Move(root, index, depth, init->root_cnode,
-            init->timer_irq, seL4_WordBits);
+                                init->timer_irq, seL4_WordBits);
     assert(error == seL4_NoError);
     return error;
 }
@@ -83,10 +83,11 @@ arch_init_simple(simple_t *simple)
 }
 
 
-int arch_init_timer(env_t env) {
+int arch_init_timer(env_t env)
+{
     /* FIXME Make this more platform agnostic */
 #ifdef CONFIG_IRQ_IOAPIC
-/* Map the HPET so we can query its properties */
+    /* Map the HPET so we can query its properties */
     vka_object_t frame;;
     // TODO fix this for when the timer isn't the last cap in untyped list.
     size_t total_untyped = simple_get_untyped_count(&env->simple);
@@ -95,7 +96,7 @@ int arch_init_timer(env_t env) {
     bool device;
     int irq;
     int vector;
-    simple_get_nth_untyped(&env->simple, total_untyped-1, &size_bits, &paddr, &device);
+    simple_get_nth_untyped(&env->simple, total_untyped - 1, &size_bits, &paddr, &device);
     void *vaddr = sel4platsupport_map_frame_at(&env->vka, &env->vspace, paddr, seL4_PageBits, &frame);
     ZF_LOGF_IF(vaddr == NULL, "Failed to map HPET paddr");
     if (!hpet_supports_fsb_delivery(vaddr)) {
@@ -110,8 +111,8 @@ int arch_init_timer(env_t env) {
     vspace_unmap_pages(&env->vspace, vaddr, 1, seL4_PageBits, VSPACE_PRESERVE);
     vka_free_object(&env->vka, &frame);
     env->timer = sel4platsupport_get_hpet_paddr(&env->vspace, &env->simple, &env->vka,
-                                     paddr, env->timer_notification.cptr,
-                                     irq, vector);
+                                                paddr, env->timer_notification.cptr,
+                                                irq, vector);
 #else
     env->timer = sel4platsupport_get_pit(&env->vka, &env->simple, NULL, env->timer_notification.cptr);
 #endif

@@ -42,7 +42,7 @@ typedef struct timer_config {
     enum timer_variant timer;
     uint64_t tsc_freq;
     seL4_Word timer_cap;
-    int (*oneshot_relative)(int tid,uint64_t ns);
+    int (*oneshot_relative)(int tid, uint64_t ns);
 } timer_config_t;
 
 typedef struct pci_config_config {
@@ -68,20 +68,23 @@ typedef struct custom_simple {
 } custom_simple_t;
 
 
-static inline bool is_hw_timer(custom_simple_t *custom_simple) {
+static inline bool is_hw_timer(custom_simple_t *custom_simple)
+{
     return custom_simple->timer_config.timer == TIMER_HW;
 }
 
-static inline bool is_hw_serial(custom_simple_t *custom_simple) {
+static inline bool is_hw_serial(custom_simple_t *custom_simple)
+{
     return custom_simple->serial_config.serial == SERIAL_HW;
 }
 
-static inline bool is_hw_pci_config(custom_simple_t *custom_simple) {
+static inline bool is_hw_pci_config(custom_simple_t *custom_simple)
+{
     return custom_simple->pci_config_config.pci_config == PCI_CONFIG_HW;
 }
 
 int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
-                            vka_t *vka);
+                                          vka_t *vka);
 int custom_get_num_regions(custom_simple_t *custom_simple);
 int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem_region_t *regions);
 void rump_irq_handle(int intr);

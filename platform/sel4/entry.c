@@ -160,7 +160,8 @@ wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
     }
 }
 
-void rump_irq_handle(int intr) {
+void rump_irq_handle(int intr)
+{
     sync_bin_sem_wait(&env.spl_semaphore);
 
     ZF_LOGF_IF(env.spldepth != 0, "spldepth should be 0.  This thread should be blocked.");

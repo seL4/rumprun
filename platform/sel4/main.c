@@ -10,22 +10,23 @@
  * @TAG(DATA61_BSD)
  */
 
- #include <autoconf.h>
+#include <autoconf.h>
 
- #include <rumprun/init_data.h>
- #include <simple/simple.h>
- #include <utils/util.h>
- #include <sel4/helpers.h>
- #include <rumprun/custom_simple.h>
+#include <rumprun/init_data.h>
+#include <simple/simple.h>
+#include <utils/util.h>
+#include <sel4/helpers.h>
+#include <rumprun/custom_simple.h>
 
- int init_rumprun(custom_simple_t *custom_simple);
+int init_rumprun(custom_simple_t *custom_simple);
 
- int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
-     ZF_LOGF_IF(argc != 2, "Incorrect number of arguments passed");
-     seL4_CPtr endpoint = (seL4_CPtr) atoi(argv[1]);
-     env.custom_simple.simple = &env.simple;
-     simple_init_rumprun(&env.custom_simple, endpoint);
-     return init_rumprun(&env.custom_simple);
+    ZF_LOGF_IF(argc != 2, "Incorrect number of arguments passed");
+    seL4_CPtr endpoint = (seL4_CPtr) atoi(argv[1]);
+    env.custom_simple.simple = &env.simple;
+    simple_init_rumprun(&env.custom_simple, endpoint);
+    return init_rumprun(&env.custom_simple);
 
- }
+}
