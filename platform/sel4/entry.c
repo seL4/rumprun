@@ -40,10 +40,10 @@
 static sel4utils_alloc_data_t alloc_data;
 
 /* dimensions of virtual memory for the allocator to use */
-#define ALLOCATOR_VIRTUAL_POOL_SIZE ((1 << seL4_PageBits) * 4000)
+#define ALLOCATOR_VIRTUAL_POOL_SIZE ((PAGE_SIZE_4K) * 4000)
 
 /* allocator static pool */
-#define ALLOCATOR_STATIC_POOL_SIZE ((1 << seL4_PageBits) * 20)
+#define ALLOCATOR_STATIC_POOL_SIZE ((PAGE_SIZE_4K) * 20)
 static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
 
 /* Damn linker errors: This symbol is overrided by files_to_obj.sh it is included
