@@ -23,7 +23,8 @@
 #include <sel4platsupport/plat/pit.h>
 #include <sel4platsupport/device.h>
 
-
+/* The below functions are implementations of the libsel4simple arch specific interface.
+   See libsel4simple/arch_include/x86/simple/arch/simple.h for further documentation */
 static seL4_CPtr
 get_IOPort_cap(void *data, uint16_t start_port, uint16_t end_port)
 {
@@ -33,7 +34,7 @@ get_IOPort_cap(void *data, uint16_t start_port, uint16_t end_port)
 
 
 static seL4_Error
-get_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
+get_timer_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
 {
     init_data_t *init = (init_data_t *) data;
     ZF_LOGF_IF(irq != DEFAULT_TIMER_INTERRUPT, "Incorrect interrupt number");
@@ -47,7 +48,7 @@ get_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
 
 
 static seL4_Error
-get_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
+get_timer_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
         UNUSED seL4_Word pci_bus, UNUSED seL4_Word pci_dev, UNUSED seL4_Word pci_func,
         UNUSED seL4_Word handle, seL4_Word vector)
 {
@@ -60,7 +61,7 @@ get_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
 
 
 static seL4_Error
-get_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, seL4_Word ioapic,
+get_timer_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, seL4_Word ioapic,
            seL4_Word pin, seL4_Word level, seL4_Word polarity, seL4_Word vector)
 {
     init_data_t *init = (init_data_t *) data;
@@ -74,9 +75,9 @@ void
 arch_init_simple(simple_t *simple)
 {
     simple->arch_simple.IOPort_cap = get_IOPort_cap;
-    simple->arch_simple.ioapic = get_ioapic;
-    simple->arch_simple.irq = get_irq;
-    simple->arch_simple.msi = get_msi;
+    simple->arch_simple.ioapic = get_timer_ioapic;
+    simple->arch_simple.irq = get_timer_irq;
+    simple->arch_simple.msi = get_timer_msi;
     simple->arch_simple.data = (void *) simple->data;
 
 }
