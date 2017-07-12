@@ -236,14 +236,13 @@ int init_rumprun(custom_simple_t *custom_simple)
     sync_bin_sem_init(&env.spl_semaphore, env.spl_notification.cptr, 1);
     sync_bin_sem_init(&env.halt_semaphore, env.halt_notification.cptr, 1);
 
-    res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     custom_get_priority(&env.custom_simple), simple_get_cnode(&env.simple), seL4_NilData,
-                                     &env.timing_thread);
+    sel4utils_thread_config_t thread_config = thread_config_default(&env.simple,
+        simple_get_cnode(&env.simple), seL4_NilData, seL4_CapNull, custom_get_priority(&env.custom_simple));
+
+    res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.timing_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
 
-    res = sel4utils_configure_thread(&env.vka, &env.vspace, &env.vspace, seL4_CapNull,
-                                     custom_get_priority(&env.custom_simple), simple_get_cnode(&env.simple), seL4_NilData,
-                                     &env.pci_thread);
+    res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.pci_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
 
 
