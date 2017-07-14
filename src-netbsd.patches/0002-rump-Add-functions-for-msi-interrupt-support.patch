@@ -1,18 +1,23 @@
-From f257184b39fd2cf7aeaaa52c698951897ce8b039 Mon Sep 17 00:00:00 2001
+From 72a2452faf34b6cc9dc801ca90d73a461b61c617 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Wed, 14 Jun 2017 23:02:52 +1000
 Subject: [PATCH 2/3] rump: Add functions for msi interrupt support
 
 ---
- sys/rump/dev/lib/libpci/pci_user.h    |  1 +
- sys/rump/dev/lib/libpci/rumpdev_pci.c | 51 +++++++++++++++++++++++++++++++++++
- 2 files changed, 52 insertions(+)
+ sys/rump/dev/lib/libpci/pci_user.h    |  3 +-
+ sys/rump/dev/lib/libpci/rumpdev_pci.c | 60 ++++++++++++++++++++++++++++++++++-
+ 2 files changed, 61 insertions(+), 2 deletions(-)
 
 diff --git a/sys/rump/dev/lib/libpci/pci_user.h b/sys/rump/dev/lib/libpci/pci_user.h
-index 08aed242..132792a4 100644
+index 08aed242..71105b59 100644
 --- a/sys/rump/dev/lib/libpci/pci_user.h
 +++ b/sys/rump/dev/lib/libpci/pci_user.h
-@@ -22,6 +22,7 @@ void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);
+@@ -18,10 +18,11 @@ int rumpcomp_pci_confwrite(unsigned, unsigned, unsigned, int, unsigned int);
+ 
+ int rumpcomp_pci_irq_map(unsigned, unsigned, unsigned, int, unsigned);
+ void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);
+-
++int rumpcomp_pci_get_bdf(unsigned ih, unsigned *bus, unsigned *dev, unsigned *function);
  int rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val);
  int rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result);
  
@@ -21,7 +26,7 @@ index 08aed242..132792a4 100644
  int rumpcomp_pci_dmalloc(size_t, size_t, unsigned long *, unsigned long *);
  #ifdef RUMPCOMP_USERFEATURE_PCI_DMAFREE
 diff --git a/sys/rump/dev/lib/libpci/rumpdev_pci.c b/sys/rump/dev/lib/libpci/rumpdev_pci.c
-index 249076ab..f6cf8745 100644
+index 249076ab..5704911d 100644
 --- a/sys/rump/dev/lib/libpci/rumpdev_pci.c
 +++ b/sys/rump/dev/lib/libpci/rumpdev_pci.c
 @@ -50,6 +50,16 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
@@ -41,25 +46,30 @@ index 249076ab..f6cf8745 100644
  pcitag_t
  pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
  {
-@@ -147,6 +157,47 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
- 	return rumpcomp_pci_irq_establish(ih, func, arg);
- }
+@@ -144,7 +154,55 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+ 	int level, int (*func)(void *), void *arg)
+ {
  
-+void *
-+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-+    int level, int (*func)(void *), void *arg, const char *__nouse)
-+{
-+    void *addr = pci_intr_establish(pc, ih, level, func, arg);
-+
-+    /* set up MSI here if required */
+-	return rumpcomp_pci_irq_establish(ih, func, arg);
++	void * addr =  rumpcomp_pci_irq_establish(ih, func, arg);
++	/* set up MSI here if required */
 +    if (pci_intr_type(pc, ih) == PCI_INTR_TYPE_MSI) {
-+        pcitag_t tag = pci_make_tag(pc, 3, 0, 0);
++		unsigned bus;
++		unsigned dev;
++		unsigned function;
++		int err = rumpcomp_pci_get_bdf(ih, &bus, &dev, &function);
++		if (err) {
++            printf("Failed to get bdf, likely bad cookig\n");
++			return NULL;
++		}
++        pcitag_t tag = pci_make_tag(pc, bus, dev, function);
 +
 +        int offset;
 +        pcireg_t reg;
-+        int err = pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, &reg);
++        err = pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, &reg);
 +        if (err == 0) {
 +            printf("Failed to get MSI cap\n");
++			return NULL;
 +        } else {
 +            printf("MSI cap at offset %d, CTL reg %08x\n", offset, reg);
 +        }
@@ -82,13 +92,17 @@ index 249076ab..f6cf8745 100644
 +        reg |= (54 << 0);
 +        pci_conf_write(pc, tag, offset + PCI_MSI_MDATA64, reg);
 +    }
-+
-+    return addr;
++	return addr;
 +}
 +
++void *
++pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
++    int level, int (*func)(void *), void *arg, const char *__nouse)
++{
++    return pci_intr_establish(pc, ih, level, func, arg);
+ }
+ 
  int
- pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
- 	int attr, uint64_t data)
 -- 
 2.11.0
 

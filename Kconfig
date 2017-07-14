@@ -26,5 +26,21 @@ config RUMPRUN_TMPFS_NUM_MiB
     help
         Set this to the size of memory you want to back the tmpfs at /tmp
 
+    menu "Set IOAPIC options"
+        depends on RUMPRUN && IRQ_IOAPIC
+
+        choice
+            prompt "Select Ethernet IRQ handling"
+            default USE_IOAPIC_ETH
+            help
+                Select IRQ handling for ethernet.
+
+            config USE_IOAPIC_ETH
+                bool "IOAPIC"
+            config USE_MSI_ETH
+                bool "MSI"
+    endchoice
+    endmenu
+
 config HAVE_RUMPRUN
     bool

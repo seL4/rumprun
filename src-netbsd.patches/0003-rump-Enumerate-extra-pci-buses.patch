@@ -1,4 +1,4 @@
-From 30758b22700131020b13a94004a9139b705eb34f Mon Sep 17 00:00:00 2001
+From 4a141099d111a0caacfb48ba4ce746ebb7765e56 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Mon, 24 Jul 2017 15:16:00 +1000
 Subject: [PATCH 3/3] rump: Enumerate extra pci buses

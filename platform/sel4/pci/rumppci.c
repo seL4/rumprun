@@ -38,7 +38,12 @@ static void *addresses[NUM_PCI_MAPPINGS];
 static uint32_t sizes[NUM_PCI_MAPPINGS];
 #endif /* TRACK_PCI_MAPPINGS */
 
-static int intrs[BMK_MAXINTR];
+static struct {
+    int intrs;
+    int bus;
+    int dev;
+    int function;
+} pci_data[BMK_MAXINTR];
 
 /* Wrappers to pass through to sel4 */
 int
@@ -149,7 +154,22 @@ rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
         return BMK_EGENERIC;
     }
 
-    intrs[cookie] = intrline;
+    pci_data[cookie].intrs = intrline;
+    pci_data[cookie].bus = bus;
+    pci_data[cookie].dev = device;
+    pci_data[cookie].function = fun;
+    return 0;
+}
+
+int
+rumpcomp_pci_get_bdf(unsigned cookie, unsigned *bus, unsigned *dev, unsigned *function) {
+    if (cookie > BMK_MAXINTR) {
+        return 1;
+    }
+
+    *bus = pci_data[cookie].bus;
+    *dev = pci_data[cookie].dev;
+    *function = pci_data[cookie].function;
     return 0;
 }
 
@@ -157,13 +177,21 @@ rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
 void *
 rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 {
-    if (env.caps[intrs[cookie]] == 0 && !env.custom_simple.camkes) {
-        int error = vka_cspace_alloc(&env.vka, &env.caps[intrs[cookie]]);
+    if (env.caps[pci_data[cookie].intrs] == 0 && !env.custom_simple.camkes) {
+        int error = vka_cspace_alloc(&env.vka, &env.caps[pci_data[cookie].intrs]);
         ZF_LOGF_IF(error != 0, "Failed to allocate cslot, error %d", error);
         cspacepath_t path;
-        vka_cspace_make_path(&env.vka, env.caps[intrs[cookie]], &path);
+        vka_cspace_make_path(&env.vka, env.caps[pci_data[cookie].intrs], &path);
 
-#ifdef CONFIG_IRQ_IOAPIC
+#if defined CONFIG_IRQ_IOAPIC && CONFIG_USE_MSI_ETH
+        int irq = pci_data[cookie].intrs;
+        irq = 6;
+        error = seL4_IRQControl_GetMSI(simple_get_irq_ctrl(&env.simple), path.root, path.capPtr, path.capDepth,
+                                       pci_data[cookie].bus, pci_data[cookie].dev, pci_data[cookie].function, 0, irq);
+
+        if (error != 0) {
+            bmk_printf("Failed IRQControl Get MSI\n");
+        }
         /*
          *  XXX: We use a pretty static way of picking IRQ numbers here.
          *  The rumpkernel pci driver is giving us interrupt numbers for the PIC
@@ -174,7 +202,8 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
          *  On a Dell Haswell machine we test on, when we get irq = 3,
          *      this corresponds to IOAPIC irq 20.
          */
-        int irq = intrs[cookie];
+#elif defined CONFIG_IRQ_IOAPIC
+        int irq = pci_data[cookie].intrs;
         int vector = irq;
         if (irq == 3) {
             irq = 20;
@@ -193,29 +222,29 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
         if (error != 0) {
             bmk_printf("Failed to get IOAPIC, error = %d\n", error);
         }
-        error = seL4_IRQHandler_Ack(env.caps[intrs[cookie]]);
+        error = seL4_IRQHandler_Ack(env.caps[pci_data[cookie].intrs]);
         if (error != 0) {
             bmk_printf("Failed to Ack IOAPIC\n");
         }
 
 #else /* using PIC */
 
-        error = seL4_IRQControl_Get(simple_get_irq_ctrl(&env.simple),  intrs[cookie], path.root, path.capPtr, path.capDepth);
+        error = seL4_IRQControl_Get(simple_get_irq_ctrl(&env.simple),  pci_data[cookie].intrs, path.root, path.capPtr, path.capDepth);
         ZF_LOGF_IF(error != 0, "Failed to get IRQControl\n");
-        error = seL4_IRQHandler_Ack(env.caps[intrs[cookie]]);
+        error = seL4_IRQHandler_Ack(env.caps[pci_data[cookie].intrs]);
         ZF_LOGF_IF(error != 0, "Failed to ack IRQ handler\n");
 #endif /* CONFIG_IRQ_IOAPIC */
 
         cspacepath_t path2;
         error = vka_mint_object(&env.vka, &env.pci_notification, &path2,
-                                seL4_AllRights, seL4_CapData_Badge_new(1 << (intrs[cookie])));
+                                seL4_AllRights, seL4_CapData_Badge_new(1 << (pci_data[cookie].intrs)));
         ZF_LOGF_IF(error != 0, "Failed to mint notification object\n");
-        error = seL4_IRQHandler_SetNotification(env.caps[intrs[cookie]], path2.capPtr);
+        error = seL4_IRQHandler_SetNotification(env.caps[pci_data[cookie].intrs], path2.capPtr);
         ZF_LOGF_IF(error != 0, "Failed to bind IRQ to notification\n");
     }
 
-    bmk_isr_rumpkernel(handler, data, intrs[cookie], BMK_INTR_ROUTED);
-    return &intrs[cookie];
+    bmk_isr_rumpkernel(handler, data, pci_data[cookie].intrs, BMK_INTR_ROUTED);
+    return &pci_data[cookie].intrs;
 }
 
 
