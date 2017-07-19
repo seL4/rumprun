@@ -77,11 +77,12 @@ __weak_alias(rump_init_server,rumprun_enosys);
 int rumprun_cold = 1;
 
 void
-rumprun_boot(char *cmdline)
+rumprun_boot(struct rumprun_boot_config *config)
 {
+	char * cmdline = config->cmdline;
 	struct tmpfs_args ta = {
 		.ta_version = TMPFS_ARGS_VERSION,
-		.ta_size_max = 1*1024*1024,
+		.ta_size_max = config->tmpfs_num_MiB*1024*1024,
 		.ta_root_mode = 01777,
 	};
 	int tmpfserrno;

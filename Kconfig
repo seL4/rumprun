@@ -19,5 +19,12 @@ menuconfig RUMPRUN
     help
         Rumprun unikernel
 
+config RUMPRUN_TMPFS_NUM_MiB
+    int "Size of Rumprun tmpfs mount in MiB"
+    default 1
+    depends on RUMPRUN
+    help
+        Set this to the size of memory you want to back the tmpfs at /tmp
+
 config HAVE_RUMPRUN
     bool

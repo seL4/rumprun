@@ -35,7 +35,7 @@
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
 #include <sel4utils/stack.h>
-
+#include <rumprun-base/rumprun.h>
 /* global static memory for init */
 static sel4utils_alloc_data_t alloc_data;
 
@@ -281,8 +281,9 @@ int init_rumprun(custom_simple_t *custom_simple)
     bmk_sched_init();
     provide_vmem(&env);
     intr_init();
+    struct rumprun_boot_config rumprun_config = {(char *)custom_get_cmdline(&env.custom_simple), CONFIG_RUMPRUN_TMPFS_NUM_MiB};
 
-    bmk_sched_startmain(bmk_mainthread, (void *) custom_get_cmdline(&env.custom_simple));
+    bmk_sched_startmain(bmk_mainthread, (void *) &rumprun_config);
 
     return 0;
 }

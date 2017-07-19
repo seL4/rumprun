@@ -29,7 +29,12 @@
 typedef int mainlike_fn(int, char *[]);
 mainlike_fn main;
 
-void	rumprun_boot(char *);
+struct rumprun_boot_config {
+    char * cmdline;
+    int tmpfs_num_MiB;
+};
+
+void	rumprun_boot(struct rumprun_boot_config *);
 
 void *	rumprun(int, mainlike_fn, int, char *[]);
 int	rumprun_wait(void *);
