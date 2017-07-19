@@ -126,9 +126,11 @@ provide_vmem(env_t env)
 
     vspace_new_pages_config_t config;
     size_t rumprun_size = env->custom_simple.rumprun_memory_size;
-    size_t rumprun_pages = rumprun_size / PAGE_SIZE_4K;
-    printf("num pages %zd\n", rumprun_pages);
-    if (default_vspace_new_pages_config(rumprun_pages, seL4_PageBits, &config)) {
+    int page_size_bits = sel4_page_size_bits_for_memory_region(rumprun_size);
+    ZF_LOGW_IF(rumprun_size % BIT(page_size_bits) != 0, "Warning: Memory size is being truncated by: 0x%zx", rumprun_size % BIT(page_size_bits));
+    size_t rumprun_pages = rumprun_size / BIT(page_size_bits);
+    printf("num pages %zd with size: %d bits\n", rumprun_pages, page_size_bits);
+    if (default_vspace_new_pages_config(rumprun_pages, page_size_bits, &config)) {
         ZF_LOGF("Failed to create config");
     }
     if (vspace_new_pages_config_use_device_ut(true, &config)) {
