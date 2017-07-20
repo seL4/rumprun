@@ -119,6 +119,8 @@ rumpcomp_pci_virt_to_mach(void *virt)
     }
 
     /* Couldn't find above, try and find in the system allocators */
-    uintptr_t paddr = (uintptr_t) vka_utspace_paddr(&env.vka, vspace_get_cookie(&env.vspace, virt), seL4_X86_4K, 12);
-    return paddr + (vin & MASK(seL4_PageBits) );
+    /* This likely means that the upper levels have an mbuf that was not allocated through rumpcomp_pci_dmalloc */
+    /* Apparently this behavior is fine. */
+    uintptr_t paddr = (uintptr_t) vka_utspace_paddr(&env.vka, vspace_get_cookie(&env.vspace, virt), env.rump_mapping_page_type, env.rump_mapping_page_size_bits);
+    return paddr + (vin & MASK((unsigned int) env.rump_mapping_page_size_bits) );
 }

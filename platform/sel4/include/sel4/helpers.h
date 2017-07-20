@@ -33,6 +33,8 @@ struct env {
     vspace_t vspace;
     /* initialised timer */
     seL4_timer_t *timer;
+    size_t rump_mapping_page_size_bits;
+    seL4_Word rump_mapping_page_type;
     /* abstract interface over application init */
     simple_t simple;
     custom_simple_t custom_simple;
