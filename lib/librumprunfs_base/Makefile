@@ -14,8 +14,9 @@ dependall:
 	  RUMPRUN_COOKFS_OBJCOPY="${OBJCOPY}"				\
 	  RUMPRUN_COOKFS_SIZE="${SIZE}"					\
 	    RUMPRUN_COOKFS_INCDIR="${RROBJ}/dest.stage/include"		\
-		${RROBJ}/app-tools/${TOOLTUPLE}-cookfs -s 1		\
-		    ${MAKEOBJDIR}/librumprunfs_base.a rootfs )
+		${RROBJ}/app-tools/${TOOLTUPLE}-cookfs \
+			-s `echo ${RROBJ}/rootfs/ | grep -o / | wc -l` \
+		    ${MAKEOBJDIR}/librumprunfs_base.a ${RROBJ}/rootfs )
 
 install:
 	mkdir -p ${DESTDIR}/share/rumprun/rumprunfs_base
