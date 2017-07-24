@@ -54,6 +54,7 @@ $(SOURCE_DIR)/.rumpstamp:
 	cd $(SOURCE_DIR) && git submodule init
 	cd $(SOURCE_DIR) && git submodule update
 	cd $(SOURCE_DIR)/src-netbsd && git am ../src-netbsd.patches/*
+	cd $(SOURCE_DIR)/buildrump.sh && git am ../buildrump.sh.patches/*
 	touch $@
 
 rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp

@@ -1,0 +1,38 @@
+From 30758b22700131020b13a94004a9139b705eb34f Mon Sep 17 00:00:00 2001
+From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
+Date: Mon, 24 Jul 2017 15:16:00 +1000
+Subject: [PATCH 3/3] rump: Enumerate extra pci buses
+
+---
+ sys/rump/dev/lib/libpci/Makefile   | 2 +-
+ sys/rump/dev/lib/libpci/PCI.ioconf | 4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/sys/rump/dev/lib/libpci/Makefile b/sys/rump/dev/lib/libpci/Makefile
+index 41dbfea3..d4b1be0c 100644
+--- a/sys/rump/dev/lib/libpci/Makefile
++++ b/sys/rump/dev/lib/libpci/Makefile
+@@ -23,7 +23,7 @@ SRCS+=	rumpdev_bus_space.c
+ SRCS+=	rumpdev_bus_dma.c
+ 
+ SRCS+=	pci_at_mainbus.c
+-
++SRCS+=  ppb.c
+ .if ${RUMP_PCI_IOSPACE:Uno} == "yes"
+ .error RUMP_PCI_IOSPACE defined in Makefile.  Use userfeatures.h instead.
+ .endif
+diff --git a/sys/rump/dev/lib/libpci/PCI.ioconf b/sys/rump/dev/lib/libpci/PCI.ioconf
+index 7d6bf5e0..7ad35308 100644
+--- a/sys/rump/dev/lib/libpci/PCI.ioconf
++++ b/sys/rump/dev/lib/libpci/PCI.ioconf
+@@ -10,3 +10,7 @@ include "rump/dev/files.rump"
+ pseudo-root mainbus*
+ 
+ pci*    at mainbus? bus ?
++
++
++ppb*    at pci? dev ? function ?
++pci*   at ppb? bus ?
+-- 
+2.11.0
+

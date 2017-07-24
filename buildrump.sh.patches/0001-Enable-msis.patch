@@ -1,0 +1,26 @@
+From 329d0dda4655f233c647e2028f503aacf7e19f08 Mon Sep 17 00:00:00 2001
+From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
+Date: Mon, 24 Jul 2017 15:18:05 +1000
+Subject: [PATCH] Enable msis
+
+---
+ buildrump.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/buildrump.sh b/buildrump.sh
+index e4096b6..10a4793 100755
+--- a/buildrump.sh
++++ b/buildrump.sh
+@@ -705,7 +705,8 @@ EOF
+ 	# Need to:
+ 	#   a) migrate more defines there
+ 	#   b) set no MSI only when necessary
+-	printf '#define NO_PCI_MSI_MSIX\n' > ${BRIMACROS}.building
++	# printf '#define NO_PCI_MSI_MSIX\n' > ${BRIMACROS}.building
++	printf '\n' > ${BRIMACROS}.building
+ 
+ 	# tool build done.  flip mk.conf name so that it gets picked up
+ 	omkconf="${MKCONF}"
+-- 
+2.11.0
+
