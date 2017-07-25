@@ -36,7 +36,7 @@ RUMPRUN_SEL4LIBS =  sel4 sel4muslcsys sel4vka sel4allocman \
 # Directory containing rumprun toolchains and other binaries.
 RUMPRUN_BIN_DIR = $(SEL4_RRDEST)/bin
 # Tooltuple of rumprun toolchains.  x86_64-rumprun-netbsd is an example
-RUMPRUN_TOOLTUBPLE := $(shell grep "TOOLTUPLE=" $(SEL4_RROBJ)/config.mk | cut  -c 11-)
+RUMPRUN_TOOLTUBPLE := $(shell grep "TOOLTUPLE=" $(SEL4_RROBJ)/config.mk 2>/dev/null | cut  -c 11-)
 # rumprun-bake binary name and path.
 RUMPRUN_BAKE = $(RUMPRUN_BIN_DIR)/rumprun-bake
 # rumprun toolchain compiler front end.
@@ -44,7 +44,7 @@ RUMPRUN_CC = $(RUMPRUN_BIN_DIR)/$(RUMPRUN_TOOLTUBPLE)-gcc
 
 # compiler front end for constructing the rumprun basefile manually.
 # Note: this is a different compiler than RUMPRUN_CC mentioned above.
-BASEFILE_CC := $(shell grep "CC=" $(SEL4_RROBJ)/config.mk | cut  -c 4-)
+BASEFILE_CC := $(shell grep "CC=" $(SEL4_RROBJ)/config.mk 2>/dev/null | cut  -c 4-)
 # Extra linker flags for constructing rumprun basefile manually.
 BASEFILE_LIB_DIRS = $(SEL4_RROBJ)/lib/libbmk_core $(SEL4_RROBJ)/lib/libbmk_rumpuser
 BASEFILE_LD_FLAGS = -Wl,-r \
