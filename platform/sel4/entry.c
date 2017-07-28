@@ -86,6 +86,11 @@ init_allocator(env_t env)
     allocman_add_simple_untypeds_with_regions(allocator, &env->simple, num_regions, regions);
     allocman_mspace_free(allocator, regions, sizeof(pmem_region_t) * num_regions);
 
+    /* Add timer untyped objects to allocator */
+    if (env->custom_simple.timer_config.timer == TIMER_HW) {
+        allocman_add_untypeds_from_timer_objects(allocator, env->custom_simple.timer_config.hw.to);
+    }
+
     error = custom_simple_vspace_bootstrap_frames(&env->custom_simple, &env->vspace, &alloc_data, &env->vka);
 
     error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
@@ -115,6 +120,8 @@ static void init_timer(env_t env)
 
     error = arch_init_timer(env);
     ZF_LOGF_IF(error != 0, "arch_init_timer failed");
+    ltimer_reset(&env->timer.ltimer);
+
 }
 
 static void
@@ -156,9 +163,9 @@ wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
         seL4_Word sender_badge;
         if (is_hw_timer(&env.custom_simple)) {
             seL4_Wait(env.timer_notification.cptr, &sender_badge);
-            sel4_timer_handle_single_irq(env.timer);
+            sel4platsupport_handle_timer_irq(&env.timer, sender_badge);
         } else {
-            seL4_Wait(env.custom_simple.timer_config.timer_cap, &sender_badge);
+            seL4_Wait(env.custom_simple.timer_config.interface.timer_cap, &sender_badge);
         }
         seL4_Signal(env.halt_notification.cptr);
     }
@@ -220,6 +227,15 @@ int init_rumprun(custom_simple_t *custom_simple)
     init_allocator(&env);
 
     int res;
+
+    res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
+    ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
+
+    res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple);
+    ZF_LOGF_IF(res != 0, "sel4platsupport_get_io_port_ops failed");
+
+    sel4platsupport_new_malloc_ops(&env.io_ops.malloc_ops);
+
     /* initialise the timer */
     if (env.custom_simple.timer_config.timer == TIMER_HW) {
         init_timer(&env);
@@ -260,12 +276,6 @@ int init_rumprun(custom_simple_t *custom_simple)
                                  1);
 
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_pci_interrupt) failed");
-
-    res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
-    ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
-
-    res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple);
-    ZF_LOGF_IF(res != 0, "sel4platsupport_get_io_port_ops failed");
 
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space = simple_init_cap(&env.simple, seL4_CapIOSpace);

@@ -40,9 +40,16 @@ typedef struct serial_config {
 
 typedef struct timer_config {
     enum timer_variant timer;
-    uint64_t tsc_freq;
-    seL4_Word timer_cap;
-    int (*oneshot_relative)(int tid, uint64_t ns);
+    union {
+        struct {
+            uint64_t tsc_freq;
+            seL4_Word timer_cap;
+            int (*oneshot_relative)(int tid, uint64_t ns);
+        } interface;
+        struct {
+            timer_objects_t *to;
+        } hw;
+    };
 } timer_config_t;
 
 typedef struct pci_config_config {

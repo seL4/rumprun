@@ -32,7 +32,7 @@ struct env {
     /* virtual memory management interface */
     vspace_t vspace;
     /* initialised timer */
-    seL4_timer_t *timer;
+    seL4_timer_t timer;
     size_t rump_mapping_page_size_bits;
     seL4_Word rump_mapping_page_type;
     /* abstract interface over application init */

@@ -104,21 +104,13 @@ x86_initclocks(void)
 
     uint64_t tsc_freq = simple_get_arch_info(&env.simple) * US_IN_S;
     if (!is_hw_timer(&env.custom_simple)) {
-        tsc_freq = env.custom_simple.timer_config.tsc_freq;
+        tsc_freq = env.custom_simple.timer_config.interface.tsc_freq;
     }
 
     tsc_base = rdtsc_pure();
 
     tsc_mult = (NSEC_PER_SEC << 32) / tsc_freq;
     time_base = mul64_32(tsc_base, tsc_mult);
-    if (is_hw_timer(&env.custom_simple)) {
-        int error = timer_start(env.timer->timer);
-        if (error) {
-            ZF_LOGF("Failed to start default timer");
-
-        }
-        sel4_timer_handle_single_irq(env.timer);
-    }
 
     return;
 }
@@ -181,9 +173,9 @@ bmk_platform_cpu_block(bmk_time_t until)
     delta_ns = until - now;
     int res;
     if (is_hw_timer(&env.custom_simple)) {
-        res = timer_oneshot_relative(env.timer->timer, delta_ns);
+        res = ltimer_set_timeout(&env.timer.ltimer,delta_ns, TIMEOUT_RELATIVE);
     } else {
-        res = env.custom_simple.timer_config.oneshot_relative(0, delta_ns);
+        res = env.custom_simple.timer_config.interface.oneshot_relative(0, delta_ns);
     }
     if (res != 0) {
         bmk_platform_splx(0);

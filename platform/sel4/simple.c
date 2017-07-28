@@ -15,6 +15,7 @@
 #include <sel4/helpers.h>
 #include <allocman/utspace/utspace.h>
 #include <rumprun/custom_simple.h>
+#include <platsupport/timer.h>
 
 static int simple_default_cap_count(void *data)
 {
@@ -244,6 +245,7 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     custom_simple->cmdline = init_data->cmdline;
     custom_simple->priority = init_data->priority;
     custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
+    custom_simple->timer_config.hw.to = &init_data->to;
     simple->data = init_data;
     simple->cap_count = &simple_default_cap_count;
     simple->init_cap = &simple_default_init_cap;

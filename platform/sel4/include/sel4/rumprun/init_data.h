@@ -20,6 +20,7 @@
 #include <simple/simple.h>
 #include <vspace/vspace.h>
 #include <sel4utils/vspace.h>
+#include <sel4platsupport/timer.h>
 
 /* max test name size */
 #define APP_NAME_MAX 20
@@ -54,13 +55,10 @@ typedef struct {
 #ifdef CONFIG_ARM_SMMU
     seL4_SlotRegion io_space_caps;
 #endif
-    /* cap to the sel4platsupport default timer irq handler */
-    seL4_CPtr timer_irq;
-    /* cap to the sel4platsupport default timer physical frame */
-    seL4_CPtr timer_frame;
-    /* cap to the sel4platsupport default timer io port */
+    /* cap to the io ports */
     seL4_CPtr io_port;
-    int timer_slot_index;
+    /* objects for the default timer */
+    timer_objects_t to;
     /* size of the rumprun process' cspace */
     seL4_Word cspace_size_bits;
     /* range of free slots in the cspace */
