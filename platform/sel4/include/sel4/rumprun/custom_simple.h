@@ -16,6 +16,7 @@
 #include <vka/vka.h>
 #include <sel4platsupport/pmem.h>
 #include <sel4utils/vspace.h>
+#include <sel4platsupport/timer.h>
 
 enum serial_variant {
     SERIAL_HW,
