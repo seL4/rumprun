@@ -53,7 +53,7 @@ get_timer_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, se
 {
     init_data_t *init = (init_data_t *) data;
     int error = seL4_CNode_Move(root, index, depth, init->root_cnode,
-            sel4platsupport_timer_objs_get_irq_cap(&init->to, vector, PS_IOAPIC), seL4_WordBits);
+            sel4platsupport_timer_objs_get_irq_cap(&init->to, pin, PS_IOAPIC), seL4_WordBits);
     assert(error == seL4_NoError);
     return error;
 }
