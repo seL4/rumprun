@@ -15,16 +15,16 @@ SECTIONS
     .tdata :
     AT (LOADADDR(.text) + (ADDR(.tdata) - ADDR(.text)))
     {
-        _tdata_start = . ;
+        _rump_tdata_start = . ;
         *(.tdata .tdata.* .gnu.linkonce.td.*)
-        _tdata_end = . ;
+        _rump_tdata_end = . ;
     }
     .tbss :
     AT (LOADADDR(.text) + (ADDR(.tbss) - ADDR(.text)))
     {
-        _tbss_start = . ;
+        _rump_tbss_start = . ;
         *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon)
-        _tbss_end = . ;
+        _rump_tbss_end = . ;
     }
 }
 INSERT AFTER .rodata;

@@ -71,10 +71,10 @@ unsigned long bmk_mainstacksize;
 #define _TLS_II
 #endif
 
-extern const char _tdata_start[], _tdata_end[];
-extern const char _tbss_start[], _tbss_end[];
-#define TDATASIZE (_tdata_end - _tdata_start)
-#define TBSSSIZE (_tbss_end - _tbss_start)
+extern const char _rump_tdata_start[], _rump_tdata_end[];
+extern const char _rump_tbss_start[], _rump_tbss_end[];
+#define TDATASIZE (_rump_tdata_end - _rump_tdata_start)
+#define TBSSSIZE (_rump_tbss_end - _rump_tbss_start)
 #define TMEMSIZE \
     (((TDATASIZE + TBSSSIZE + sizeof(void *)-1)/sizeof(void *))*sizeof(void *))
 #ifdef _TLS_I
@@ -394,7 +394,7 @@ bmk_sched_tls_alloc(void)
 	bmk_memset(p, 0, 2*sizeof(void *));
 	p += 2 * sizeof(void *);
 #endif
-	bmk_memcpy(p, _tdata_start, TDATASIZE);
+	bmk_memcpy(p, _rump_tdata_start, TDATASIZE);
 	bmk_memset(p + TDATASIZE, 0, TBSSSIZE);
 
 	return tlsmem + TCBOFFSET;
