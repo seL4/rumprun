@@ -64,6 +64,7 @@ typedef struct {
     /* range of free slots in the cspace */
     seL4_SlotRegion free_slots;
     seL4_CPtr irq_control;
+    seL4_CPtr sched_control;
 
     /* range of untyped memory in the cspace */
     seL4_SlotRegion untypeds;

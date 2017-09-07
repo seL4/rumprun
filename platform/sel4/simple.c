@@ -83,6 +83,14 @@ static seL4_CPtr simple_default_init_cap(void *data, seL4_CPtr cap_pos)
     return seL4_CapNull;
 }
 
+static seL4_CPtr simple_default_sched_control(void *data, int core)
+{
+    ZF_LOGF_IF(data == NULL, "data is NULL");
+    ZF_LOGF_IF(core != 0, "Only supports core of 0");
+
+    return ((init_data_t *)data)->sched_control;
+}
+
 static uint8_t simple_default_cnode_size(void *data)
 {
     assert(data);
@@ -178,12 +186,7 @@ receive_init_data(seL4_CPtr endpoint)
 {
     /* wait for a message */
     seL4_Word badge;
-    UNUSED seL4_MessageInfo_t info;
-
-    info = seL4_Recv(endpoint, &badge);
-
-    /* check the label is correct */
-    ZF_LOGF_IF(seL4_MessageInfo_get_length(info) != 1, "Incorrect Label");
+    seL4_Wait(endpoint, &badge);
 
     init_data_t *init_data = (init_data_t *) seL4_GetMR(0);
     ZF_LOGF_IF(init_data->free_slots.start == 0, "Bad init data");
@@ -236,6 +239,12 @@ int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem
     return j;
 }
 
+static int simple_default_core_count(void *data) {
+    ZF_LOGF_IF(data == NULL, "Data is NULL");
+    /* Currently only support one core */
+    return 1;
+}
+
 void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
 {
     init_data_t *init_data = receive_init_data(endpoint);
@@ -254,5 +263,7 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     simple->nth_untyped = &simple_default_nth_untyped;
     simple->nth_cap = &simple_default_nth_cap;
     simple->arch_info = &simple_default_arch_info;
+    simple->sched_ctrl = &simple_default_sched_control;
+    simple->core_count = &simple_default_core_count;
     arch_init_simple(simple);
 }

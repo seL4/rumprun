@@ -209,7 +209,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     env.mask_the_mask = 0;
     while (1) {
         seL4_Word sender_badge;
-        seL4_MessageInfo_t UNUSED mess = seL4_Recv(env.pci_notification.cptr, &sender_badge);
+        seL4_Wait(env.pci_notification.cptr, &sender_badge);
         rump_irq_handle(sender_badge);
     }
 }

@@ -187,7 +187,7 @@ bmk_platform_cpu_block(bmk_time_t until)
     seL4_Word sender_badge;
     bmk_platform_splx(0);
 
-    seL4_Recv(env.halt_notification.cptr, &sender_badge);
+    seL4_Wait(env.halt_notification.cptr, &sender_badge);
     env.should_wakeup = 0;
 
     bmk_platform_splhigh();
