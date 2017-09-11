@@ -17,6 +17,7 @@
 #include <sel4platsupport/pmem.h>
 #include <sel4utils/vspace.h>
 #include <sel4platsupport/timer.h>
+#include <rumprun/init_data.h>
 
 enum serial_variant {
     SERIAL_HW,
@@ -89,6 +90,25 @@ static inline bool is_hw_serial(custom_simple_t *custom_simple)
 static inline bool is_hw_pci_config(custom_simple_t *custom_simple)
 {
     return custom_simple->pci_config_config.pci_config == PCI_CONFIG_HW;
+}
+
+static inline int custom_irq_from_pci_device(custom_simple_t *custom_simple,
+                uint32_t bus, uint32_t dev, uint32_t function, ps_irq_t *irq) {
+    if (custom_simple->camkes || irq == NULL) {
+        return -1;
+    }
+
+    init_data_t *init_data = custom_simple->simple->data;
+    for (int i = 0; i < MAX_NUM_PCI_DEVICES; i++) {
+        if (bus == init_data->interrupt_list[i].bus &&
+            dev == init_data->interrupt_list[i].dev &&
+            function == init_data->interrupt_list[i].function ) {
+            *irq = init_data->interrupt_list[i].irq;
+            return 0;
+        }
+    }
+    return -1;
+
 }
 
 int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,

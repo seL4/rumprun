@@ -196,29 +196,14 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
          *  XXX: We use a pretty static way of picking IRQ numbers here.
          *  The rumpkernel pci driver is giving us interrupt numbers for the PIC
          *  even when we are running in IOAPIC mode.  For now, we override the IRQ
-         *  numbers based on compile time mappings that are hard coded below.
-         *
-         *  On QEMU we get irq = 11 which is the same irq in the IOAPIC.
-         *  On a Dell Haswell machine we test on, when we get irq = 3,
-         *      this corresponds to IOAPIC irq 20.
+         *  numbers based on what the root task gives us.
          */
 #elif defined CONFIG_IRQ_IOAPIC
-        int irq = pci_data[cookie].intrs;
-        int vector = irq;
-        if (irq == 3) {
-            irq = 20;
-        }
-        int level;
-        int low_polarity;
-        if (irq >= 16) {
-            level = 1;
-            low_polarity = 1;
-        } else {
-            level = 0;
-            low_polarity = 0;
-        }
-        error = seL4_IRQControl_GetIOAPIC(simple_get_irq_ctrl(&env.simple), path.root, path.capPtr, path.capDepth, 0, irq, level,
-                                          low_polarity, vector);
+        ps_irq_t irq = {0};
+        error = custom_irq_from_pci_device(&env.custom_simple, pci_data[cookie].bus, pci_data[cookie].dev, pci_data[cookie].function, &irq);
+        ZF_LOGF_IF(error == -1, "Failed to find IRQ number\n");
+        error = seL4_IRQControl_GetIOAPIC(simple_get_irq_ctrl(&env.simple), path.root, path.capPtr,
+            path.capDepth, irq.ioapic.ioapic, irq.ioapic.pin, irq.ioapic.level, irq.ioapic.polarity, irq.ioapic.vector);
         if (error != 0) {
             bmk_printf("Failed to get IOAPIC, error = %d\n", error);
         }

@@ -26,6 +26,7 @@
 #define APP_NAME_MAX 20
 #define RUMP_CONFIG_MAX 600
 
+#define MAX_NUM_PCI_DEVICES 1
 #define MAX_REGIONS 4
 
 typedef struct {
@@ -34,6 +35,13 @@ typedef struct {
     uint8_t is_device;
     uintptr_t paddr;
 } untyped_descriptor_t;
+
+typedef struct {
+    uint32_t bus;
+    uint32_t dev;
+    uint32_t function;
+    ps_irq_t irq;
+} interrupt_descriptor_t;
 
 /* data shared between root task and the rumprun app.
  * all caps are in the rumprun process' cspace */
@@ -69,6 +77,7 @@ typedef struct {
     /* range of untyped memory in the cspace */
     seL4_SlotRegion untypeds;
     untyped_descriptor_t untyped_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
+    interrupt_descriptor_t interrupt_list[MAX_NUM_PCI_DEVICES];
 
     /* Rump cmdline */
     char cmdline[RUMP_CONFIG_MAX];
