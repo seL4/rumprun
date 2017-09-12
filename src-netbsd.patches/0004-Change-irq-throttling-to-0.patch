@@ -1,0 +1,25 @@
+From ac8ba6240adc043a7ba8e54698e40f018d4033ac Mon Sep 17 00:00:00 2001
+From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
+Date: Tue, 12 Sep 2017 13:58:54 +1000
+Subject: [PATCH 4/4] Change irq throttling to 0
+
+---
+ sys/dev/pci/if_wm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sys/dev/pci/if_wm.c b/sys/dev/pci/if_wm.c
+index d075d673..6cc87c74 100644
+--- a/sys/dev/pci/if_wm.c
++++ b/sys/dev/pci/if_wm.c
+@@ -4578,7 +4578,7 @@ wm_init_locked(struct ifnet *ifp)
+ 		 * divided by 4 to get "simple timer" behavior.
+ 		 */
+ 
+-		sc->sc_itr = 1500;		/* 2604 ints/sec */
++		sc->sc_itr = 0;		/* No interrupt throttling */
+ 	}
+ 
+ 	error = wm_init_txrx_queues(sc);
+-- 
+2.11.0
+

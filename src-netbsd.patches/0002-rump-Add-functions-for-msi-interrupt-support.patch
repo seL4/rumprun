@@ -1,7 +1,7 @@
-From 72a2452faf34b6cc9dc801ca90d73a461b61c617 Mon Sep 17 00:00:00 2001
+From 21e20885daee099b860c93d8137fd71ef7950c22 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Wed, 14 Jun 2017 23:02:52 +1000
-Subject: [PATCH 2/3] rump: Add functions for msi interrupt support
+Subject: [PATCH 2/4] rump: Add functions for msi interrupt support
 
 ---
  sys/rump/dev/lib/libpci/pci_user.h    |  3 +-
