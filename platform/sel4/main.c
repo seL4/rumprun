@@ -28,5 +28,4 @@ int main(int argc, char **argv)
     env.custom_simple.simple = &env.simple;
     simple_init_rumprun(&env.custom_simple, endpoint);
     return init_rumprun(&env.custom_simple);
-
 }

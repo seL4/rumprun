@@ -226,9 +226,8 @@ int init_rumprun(custom_simple_t *custom_simple)
     /* initialse cspace, vspace and untyped memory allocation */
     init_allocator(&env);
 
-    int res;
 
-    res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
+    int res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
     ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
 
     res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple);
@@ -268,10 +267,12 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.custom_simple) - 1);
     ZF_LOGF_IF(res != 0, "seL4_TCB_SetPriority thread failed");
+    NAME_THREAD(env.timing_thread.tcb.cptr, "timing thread");
     res = sel4utils_start_thread(&env.timing_thread, wait_for_timer_interrupt, NULL, NULL,
                                  1);
 
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_timer_interrupt) failed");
+    NAME_THREAD(env.pci_thread.tcb.cptr, "pci thread");
     res = sel4utils_start_thread(&env.pci_thread, wait_for_pci_interrupt, NULL, NULL,
                                  1);
 
