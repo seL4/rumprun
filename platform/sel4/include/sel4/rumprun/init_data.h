@@ -46,16 +46,8 @@ typedef struct {
 /* data shared between root task and the rumprun app.
  * all caps are in the rumprun process' cspace */
 typedef struct {
-    /* page directory of the test process */
-    seL4_CPtr page_directory;
-    /* root cnode of the test process */
-    seL4_CPtr root_cnode;
-    /* tcb of the test process */
-    seL4_CPtr tcb;
     /* the domain cap */
     seL4_CPtr domain;
-    /* asid pool cap for the test process to use when creating new processes */
-    seL4_CPtr asid_pool;
     seL4_CPtr asid_ctrl;
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space;

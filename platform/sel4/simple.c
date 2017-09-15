@@ -29,58 +29,28 @@ static int simple_default_cap_count(void *data)
 
 static seL4_CPtr simple_default_init_cap(void *data, seL4_CPtr cap_pos)
 {
-    init_data_t *init_data = data;
-    switch (cap_pos) {
-    case seL4_CapNull:  /* null cap */
-        return seL4_CapNull;
-        break;
-    case seL4_CapInitThreadTCB: /* initial thread's TCB cap */
-        return init_data->tcb;
-        break;
-    case seL4_CapInitThreadCNode: /* initial thread's root CNode cap */
-        return init_data->root_cnode;
-        break;
-    case seL4_CapInitThreadVSpace: /* initial thread's VSpace cap */
-        return init_data->page_directory;
-        break;
-    case seL4_CapIRQControl: /* global IRQ controller cap */
-        return init_data->irq_control;
-        break;
-    case seL4_CapASIDControl: /* global ASID controller cap */
-        ZF_LOGF("No ASIDControl cap provided");
-        return seL4_CapNull;
-        break;
-    case seL4_CapInitThreadASIDPool: /* initial thread's ASID pool cap */
-        ZF_LOGF("No InitThreadASIDPool cap provided");
-        return seL4_CapNull;
-        break;
-    case seL4_CapIOPort: /* global IO port cap (null cap if not supported) */
-        return init_data->io_port;
-        break;
-    case seL4_CapIOSpace: /* global IO space cap (null cap if no IOMMU support) */
-        ZF_LOGE("This shouldn't be currently supported");
+    seL4_CPtr cap = sel4utils_process_init_cap(data, cap_pos);
+    if (cap == seL4_CapNull && cap_pos != seL4_CapNull) {
+        init_data_t *init_data = data;
+
+        switch (cap_pos) {
+        case seL4_CapIRQControl: /* global IRQ controller cap */
+            cap = init_data->irq_control;
+            break;
+        case seL4_CapIOPort: /* global IO port cap (null cap if not supported) */
+            cap = init_data->io_port;
+            break;
+        case seL4_CapIOSpace: /* global IO space cap (null cap if no IOMMU support) */
 #ifdef CONFIG_IOMMU
-        return init_data->io_space;
+            cap = init_data->io_space;
 #else
-        return seL4_CapNull;
+            ZF_LOGE("This shouldn't be currently supported");
 #endif
-        break;
-    case seL4_CapBootInfoFrame: /* bootinfo frame cap */
-        ZF_LOGF("No InitThreadASIDPool cap provided");
-        return seL4_CapNull;
-        break;
-    case seL4_CapInitThreadIPCBuffer: /* initial thread's IPC buffer frame cap */
-        ZF_LOGF("No InitThreadIPCBuffer cap provided");
-        return seL4_CapNull;
-        break;
-    case seL4_CapDomain: /* global domain controller cap */
-        ZF_LOGF("No Domain cap provided");
-        return seL4_CapNull;
-        break;
-    default:
-        ZF_LOGF("Invalid init cap provided");
+        default:
+            break;
+        }
     }
-    return seL4_CapNull;
+    return cap;
 }
 
 static seL4_CPtr simple_default_sched_control(void *data, int core)
