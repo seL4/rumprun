@@ -31,7 +31,7 @@ static seL4_Error
 get_timer_irq(void *data, int irq, seL4_CNode root, seL4_Word index, uint8_t depth)
 {
     init_data_t *init = (init_data_t *) data;
-    return seL4_CNode_Copy(root, index, depth, init->root_cnode,
+    return seL4_CNode_Copy(root, index, depth, sel4utils_process_init_cap(data, seL4_CapInitThreadCNode),
             sel4platsupport_timer_objs_get_irq_cap(&init->to, irq, PS_INTERRUPT), seL4_WordBits, seL4_AllRights);
 }
 
@@ -41,7 +41,7 @@ get_timer_msi(void *data, seL4_CNode root, seL4_Word index, uint8_t depth,
               UNUSED seL4_Word handle, seL4_Word vector)
 {
     init_data_t *init = (init_data_t *) data;
-    int error = seL4_CNode_Move(root, index, depth, init->root_cnode,
+    int error = seL4_CNode_Move(root, index, depth, sel4utils_process_init_cap(data, seL4_CapInitThreadCNode),
             sel4platsupport_timer_objs_get_irq_cap(&init->to, vector, PS_MSI), seL4_WordBits);
     assert(error == seL4_NoError);
     return error;
@@ -52,7 +52,7 @@ get_timer_ioapic(void *data, seL4_CNode root, seL4_Word index, uint8_t depth, se
                  seL4_Word pin, seL4_Word level, seL4_Word polarity, seL4_Word vector)
 {
     init_data_t *init = (init_data_t *) data;
-    int error = seL4_CNode_Move(root, index, depth, init->root_cnode,
+    int error = seL4_CNode_Move(root, index, depth, sel4utils_process_init_cap(data, seL4_CapInitThreadCNode),
             sel4platsupport_timer_objs_get_irq_cap(&init->to, pin, PS_IOAPIC), seL4_WordBits);
     assert(error == seL4_NoError);
     return error;
