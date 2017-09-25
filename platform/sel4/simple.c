@@ -15,7 +15,6 @@
 #include <sel4/helpers.h>
 #include <allocman/utspace/utspace.h>
 #include <rumprun/custom_simple.h>
-#include <platsupport/timer.h>
 
 static int simple_default_cap_count(void *data)
 {
@@ -218,13 +217,15 @@ static int simple_default_core_count(void *data) {
 void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
 {
     init_data_t *init_data = receive_init_data(endpoint);
-    assert(init_data);
+    ZF_LOGF_IF(init_data == NULL, "Failed to allocate init data");
+
     simple_t *simple = custom_simple->simple;
     custom_simple->camkes = false;
     custom_simple->cmdline = init_data->cmdline;
     custom_simple->priority = init_data->priority;
     custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
-    custom_simple->timer_config.hw.to = &init_data->to;
+    custom_simple->timer_config.timer_ntfn = init_data->timer_signal;
+    custom_simple->rpc_ep = init_data->rpc_ep;
     simple->data = init_data;
     simple->cap_count = &simple_default_cap_count;
     simple->init_cap = &simple_default_init_cap;

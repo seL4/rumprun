@@ -27,6 +27,7 @@
 #define RUMP_CONFIG_MAX 600
 
 #define MAX_NUM_PCI_DEVICES 1
+#define TIMER_LABEL 0x00000F00
 #define MAX_REGIONS 4
 
 typedef struct {
@@ -57,8 +58,12 @@ typedef struct {
 #endif
     /* cap to the io ports */
     seL4_CPtr io_port;
-    /* objects for the default timer */
-    timer_objects_t to;
+
+    /* ntfn to wait on for timeouts */
+    seL4_CPtr timer_signal;
+    /* ep for sending RPCs to initial task */
+    seL4_CPtr rpc_ep;
+
     /* size of the rumprun process' cspace */
     seL4_Word cspace_size_bits;
     /* range of free slots in the cspace */

@@ -25,7 +25,7 @@ enum serial_variant {
 };
 
 enum timer_variant {
-    TIMER_HW,
+    TIMER_LTIMER,
     TIMER_INTERFACE,
 };
 
@@ -42,15 +42,15 @@ typedef struct serial_config {
 
 typedef struct timer_config {
     enum timer_variant timer;
+    seL4_CPtr timer_ntfn;
     union {
         struct {
             uint64_t tsc_freq;
-            seL4_Word timer_cap;
             int (*oneshot_relative)(int tid, uint64_t ns);
         } interface;
         struct {
-            timer_objects_t *to;
-        } hw;
+            ltimer_t ltimer;
+        } ltimer;
     };
 } timer_config_t;
 
@@ -74,12 +74,13 @@ typedef struct custom_simple {
     timer_config_t timer_config;
     pci_config_config_t pci_config_config;
     ethernet_intr_config_t ethernet_intr_config;
+    seL4_CPtr rpc_ep;
 } custom_simple_t;
 
 
-static inline bool is_hw_timer(custom_simple_t *custom_simple)
+static inline bool is_ltimer(custom_simple_t *custom_simple)
 {
-    return custom_simple->timer_config.timer == TIMER_HW;
+    return custom_simple->timer_config.timer == TIMER_LTIMER;
 }
 
 static inline bool is_hw_serial(custom_simple_t *custom_simple)

@@ -103,7 +103,7 @@ x86_initclocks(void)
 {
 
     uint64_t tsc_freq = simple_get_arch_info(&env.simple) * US_IN_S;
-    if (!is_hw_timer(&env.custom_simple)) {
+    if (!is_ltimer(&env.custom_simple)) {
         tsc_freq = env.custom_simple.timer_config.interface.tsc_freq;
     }
 
@@ -172,8 +172,8 @@ bmk_platform_cpu_block(bmk_time_t until)
      */
     delta_ns = until - now;
     int res;
-    if (is_hw_timer(&env.custom_simple)) {
-        res = ltimer_set_timeout(&env.timer.ltimer,delta_ns, TIMEOUT_RELATIVE);
+    if (is_ltimer(&env.custom_simple)) {
+        res = ltimer_set_timeout(&env.custom_simple.timer_config.ltimer.ltimer, delta_ns, TIMEOUT_RELATIVE);
     } else {
         res = env.custom_simple.timer_config.interface.oneshot_relative(0, delta_ns);
     }

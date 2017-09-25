@@ -21,6 +21,7 @@
 #include <sel4platsupport/io.h>
 #include <sel4utils/iommu_dma.h>
 #include <sel4utils/page_dma.h>
+#include <sel4utils/time_server/client.h>
 #include <sel4/benchmark_utilisation_types.h>
 #include <allocman/utspace/utspace.h>
 #include <sel4platsupport/arch/io.h>
@@ -86,11 +87,6 @@ init_allocator(env_t env)
     allocman_add_simple_untypeds_with_regions(allocator, &env->simple, num_regions, regions);
     allocman_mspace_free(allocator, regions, sizeof(pmem_region_t) * num_regions);
 
-    /* Add timer untyped objects to allocator */
-    if (env->custom_simple.timer_config.timer == TIMER_HW) {
-        allocman_add_untypeds_from_timer_objects(allocator, env->custom_simple.timer_config.hw.to);
-    }
-
     error = custom_simple_vspace_bootstrap_frames(&env->custom_simple, &env->vspace, &alloc_data, &env->vka);
 
     error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
@@ -107,20 +103,6 @@ init_allocator(env_t env)
 
     bootstrap_configure_virtual_pool(allocator, vaddr, ALLOCATOR_VIRTUAL_POOL_SIZE,
                                      simple_get_pd(&env->simple));
-
-}
-
-
-
-static void init_timer(env_t env)
-{
-    int error;
-    error = vka_alloc_notification(&env->vka, &env->timer_notification);
-    ZF_LOGF_IF(error != 0, "Failed to allocate notification object");
-
-    error = arch_init_timer(env);
-    ZF_LOGF_IF(error != 0, "arch_init_timer failed");
-    ltimer_reset(&env->timer.ltimer);
 
 }
 
@@ -158,15 +140,8 @@ provide_vmem(env_t env)
 static void
 wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 {
-
     while (1) {
-        seL4_Word sender_badge;
-        if (is_hw_timer(&env.custom_simple)) {
-            seL4_Wait(env.timer_notification.cptr, &sender_badge);
-            sel4platsupport_handle_timer_irq(&env.timer, sender_badge);
-        } else {
-            seL4_Wait(env.custom_simple.timer_config.interface.timer_cap, &sender_badge);
-        }
+        seL4_Wait(env.custom_simple.timer_config.timer_ntfn, NULL);
         seL4_Signal(env.halt_notification.cptr);
     }
 }
@@ -235,9 +210,9 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     sel4platsupport_new_malloc_ops(&env.io_ops.malloc_ops);
 
-    /* initialise the timer */
-    if (env.custom_simple.timer_config.timer == TIMER_HW) {
-        init_timer(&env);
+    if (is_ltimer(custom_simple)) {
+        sel4utils_rpc_ltimer_init(&custom_simple->timer_config.ltimer.ltimer, env.io_ops,
+                                  custom_simple->rpc_ep, TIMER_LABEL);
     }
 
     /* initialise serial

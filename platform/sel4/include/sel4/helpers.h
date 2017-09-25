@@ -32,14 +32,13 @@ struct env {
     /* virtual memory management interface */
     vspace_t vspace;
     /* initialised timer */
-    seL4_timer_t timer;
+    ltimer_t ltimer;
     size_t rump_mapping_page_size_bits;
     seL4_Word rump_mapping_page_type;
     /* abstract interface over application init */
     simple_t simple;
     custom_simple_t custom_simple;
-    /* notification for timer */
-    vka_object_t timer_notification;
+
     vka_object_t pci_notification;
     vka_object_t halt_notification;
     vka_object_t spl_notification;
