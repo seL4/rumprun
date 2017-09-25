@@ -47,9 +47,6 @@ typedef struct {
 /* data shared between root task and a rumprun app.
  * all caps are in the rumprun process' cspace */
 typedef struct {
-    /* the domain cap */
-    seL4_CPtr domain;
-    seL4_CPtr asid_ctrl;
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space;
 #endif /* CONFIG_IOMMU */
@@ -83,18 +80,6 @@ typedef struct {
     size_t rumprun_memory_size;
     /* priority the process is running at */
     int priority;
-
-    /* List of elf regions in the test process image, this
-     * is provided so the test process can launch copies of itself.
-     *
-     * Note: copies should not rely on state from the current process
-     * or the image. Only use copies to run code functions, pass all
-     * required state as arguments. */
-    sel4utils_elf_region_t elf_regions[MAX_REGIONS];
-
-    /* the number of elf regions */
-    int num_elf_regions;
-
     /* the number of pages in the stack */
     int stack_pages;
 
