@@ -44,7 +44,7 @@ typedef struct {
     ps_irq_t irq;
 } interrupt_descriptor_t;
 
-/* data shared between root task and the rumprun app.
+/* data shared between root task and a rumprun app.
  * all caps are in the rumprun process' cspace */
 typedef struct {
     /* the domain cap */
@@ -81,7 +81,7 @@ typedef struct {
 
     /* Size of memory to give to rumprun */
     size_t rumprun_memory_size;
-    /* priority the test process is running at */
+    /* priority the process is running at */
     int priority;
 
     /* List of elf regions in the test process image, this
