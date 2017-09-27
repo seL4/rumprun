@@ -60,7 +60,8 @@ typedef struct {
     seL4_CPtr timer_signal;
     /* ep for sending RPCs to initial task */
     seL4_CPtr rpc_ep;
-
+    /* ep for talking to the serial server thread */
+    seL4_CPtr serial_ep;
     /* size of the rumprun process' cspace */
     seL4_Word cspace_size_bits;
     /* range of free slots in the cspace */

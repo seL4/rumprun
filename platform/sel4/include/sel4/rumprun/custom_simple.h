@@ -20,7 +20,7 @@
 #include <rumprun/init_data.h>
 
 enum serial_variant {
-    SERIAL_HW,
+    SERIAL_SERVER,
     SERIAL_INTERFACE,
 };
 
@@ -38,6 +38,7 @@ enum pci_config_variant {
 typedef struct serial_config {
     enum serial_variant serial;
     void (*putchar)(int c);
+    seL4_CPtr ep;
 } serial_config_t;
 
 typedef struct timer_config {
@@ -85,7 +86,7 @@ static inline bool is_ltimer(custom_simple_t *custom_simple)
 
 static inline bool is_hw_serial(custom_simple_t *custom_simple)
 {
-    return custom_simple->serial_config.serial == SERIAL_HW;
+    return custom_simple->serial_config.serial == SERIAL_SERVER;
 }
 
 static inline bool is_hw_pci_config(custom_simple_t *custom_simple)

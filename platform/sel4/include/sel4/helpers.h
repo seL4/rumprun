@@ -17,6 +17,7 @@
 #include <sel4utils/thread.h>
 #include <sel4utils/process.h>
 #include <sel4utils/mapping.h>
+#include <serial_server/client.h>
 #include <sync/bin_sem.h>
 
 #include <sel4platsupport/timer.h>

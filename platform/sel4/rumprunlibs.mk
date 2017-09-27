@@ -31,6 +31,7 @@ INTERMEDIATE_BASEFILE := $(SEL4_RROBJ)/rumprun-intermediate.o
 # Required seL4 libraries for the bottom halve of the system
 RUMPRUN_SEL4LIBS =  sel4 sel4muslcsys sel4vka sel4allocman \
        platsupport sel4platsupport platsupport sel4vspace \
+	   sel4serialserver sel4test \
        sel4utils sel4simple-default sel4simple sel4debug utils cpio elf muslc
 
 # Directory containing rumprun toolchains and other binaries.

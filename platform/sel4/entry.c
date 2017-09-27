@@ -215,11 +215,7 @@ int init_rumprun(custom_simple_t *custom_simple)
                                   custom_simple->rpc_ep, TIMER_LABEL);
     }
 
-    /* initialise serial
-        prints before here _may_ crash the system */
-    if (env.custom_simple.serial_config.serial == SERIAL_HW) {
-        platsupport_serial_setup_simple(NULL, &env.simple, &env.vka);
-    }
+    cons_init();
 
     res = vka_alloc_notification(&env.vka, &env.pci_notification);
     ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
@@ -262,7 +258,6 @@ int init_rumprun(custom_simple_t *custom_simple)
     ZF_LOGF_IF(res != 0, "sel4utils_new_page_dma_alloc failed");
 #endif
 
-    cons_init();
     bmk_printf("rump kernel bare metal bootstrap\n\n");
     x86_initclocks();
 

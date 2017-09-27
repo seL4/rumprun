@@ -39,34 +39,52 @@
 #include <sel4/kernel.h>
 #include <sel4/helpers.h>
 
-
 #include <bmk-core/printf.h>
 
 #include <stdio.h>
 
 static void (*vcons_putc)(int) = (void(*)(int))putchar;
+static void (*vcons_flush)(void) = NULL;
 
-void
-cons_init(void)
+/* context for talking to the serial server */
+static serial_client_context_t context;
+/* index in the shared buffer we have buffered up to */
+static ssize_t shmem_index = -1;
+
+static void cons_flush(void)
 {
-    if (env.custom_simple.serial_config.serial != SERIAL_HW) {
+    serial_server_flush(&context, shmem_index);
+    shmem_index = 0;
+}
+
+void cons_putc(int c)
+{
+    assert(shmem_index < context.shmem_size);
+    assert(shmem_index > -1);
+
+    context.shmem[shmem_index] = c;
+    shmem_index++;
+
+    if (c == '\n' || shmem_index == context.shmem_size) {
+        cons_flush();
+    }
+}
+
+void cons_init(void)
+{
+    if (env.custom_simple.serial_config.serial != SERIAL_SERVER) {
         vcons_putc = env.custom_simple.serial_config.putchar;
+        /* no flush */
+    } else {
+        int error = serial_server_client_connect(env.custom_simple.serial_config.ep,
+                                                 &env.vka, &env.vspace, &context);
+        if (!error) {
+            vcons_putc = cons_putc;
+            vcons_flush = cons_flush;
+            shmem_index = 0;
+        }
     }
-    bmk_printf_init(vcons_putc, NULL);
+
+    bmk_printf_init(vcons_putc, vcons_flush);
 }
 
-void
-cons_putc(int c)
-{
-    vcons_putc(c);
-}
-
-void
-cons_puts(const char *s)
-{
-    int c;
-
-    while ((c = *s++) != 0) {
-        vcons_putc(c);
-    }
-}

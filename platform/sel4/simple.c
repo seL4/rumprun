@@ -226,6 +226,7 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
     custom_simple->timer_config.timer_ntfn = init_data->timer_signal;
     custom_simple->rpc_ep = init_data->rpc_ep;
+    custom_simple->serial_config.ep = init_data->serial_ep;
     simple->data = init_data;
     simple->cap_count = &simple_default_cap_count;
     simple->init_cap = &simple_default_init_cap;
