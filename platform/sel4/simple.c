@@ -225,6 +225,8 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     custom_simple->priority = init_data->priority;
     custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
     custom_simple->timer_config.timer_ntfn = init_data->timer_signal;
+    custom_simple->timer_config.timer = TIMER_LTIMER;
+    custom_simple->serial_config.serial = SERIAL_SERVER;
     custom_simple->rpc_ep = init_data->rpc_ep;
     custom_simple->serial_config.ep = init_data->serial_ep;
     simple->data = init_data;
