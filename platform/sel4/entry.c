@@ -137,22 +137,13 @@ provide_vmem(env_t env)
     bmk_memsize = rumprun_size;
 }
 
-static void
-wait_for_timer_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
-{
-    while (1) {
-        seL4_Wait(env.custom_simple.timer_config.timer_ntfn, NULL);
-        seL4_Signal(env.halt_notification.cptr);
-    }
-}
-
 void rump_irq_handle(int intr)
 {
     sync_bin_sem_wait(&env.spl_semaphore);
 
     ZF_LOGF_IF(env.spldepth != 0, "spldepth should be 0.  This thread should be blocked.");
     if (env.should_wakeup != 0) {
-        seL4_Signal(env.halt_notification.cptr);
+        seL4_Signal(env.custom_simple.timer_config.timer_ntfn);
     }
 
     env.mask_the_mask = 1;
@@ -219,18 +210,12 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     res = vka_alloc_notification(&env.vka, &env.pci_notification);
     ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
-    res = vka_alloc_notification(&env.vka, &env.halt_notification);
-    ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
     res = vka_alloc_notification(&env.vka, &env.spl_notification);
     ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
     sync_bin_sem_init(&env.spl_semaphore, env.spl_notification.cptr, 1);
-    sync_bin_sem_init(&env.halt_semaphore, env.halt_notification.cptr, 1);
 
     sel4utils_thread_config_t thread_config = thread_config_default(&env.simple,
         simple_get_cnode(&env.simple), seL4_NilData, seL4_CapNull, custom_get_priority(&env.custom_simple));
-
-    res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.timing_thread);
-    ZF_LOGF_IF(res != 0, "Configure thread failed");
 
     res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.pci_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
@@ -238,11 +223,7 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.custom_simple) - 1);
     ZF_LOGF_IF(res != 0, "seL4_TCB_SetPriority thread failed");
-    NAME_THREAD(env.timing_thread.tcb.cptr, "timing thread");
-    res = sel4utils_start_thread(&env.timing_thread, wait_for_timer_interrupt, NULL, NULL,
-                                 1);
 
-    ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_timer_interrupt) failed");
     NAME_THREAD(env.pci_thread.tcb.cptr, "pci thread");
     res = sel4utils_start_thread(&env.pci_thread, wait_for_pci_interrupt, NULL, NULL,
                                  1);

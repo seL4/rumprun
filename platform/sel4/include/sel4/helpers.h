@@ -41,13 +41,10 @@ struct env {
     custom_simple_t custom_simple;
 
     vka_object_t pci_notification;
-    vka_object_t halt_notification;
     vka_object_t spl_notification;
-    sel4utils_thread_t timing_thread;
     sel4utils_thread_t pci_thread;
 
     sync_bin_sem_t spl_semaphore;
-    sync_bin_sem_t halt_semaphore;
     /* IO Ops */
     ps_io_ops_t io_ops;
     /* Irq Handler caps for PCI devices */
