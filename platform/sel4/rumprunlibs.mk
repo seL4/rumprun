@@ -58,7 +58,8 @@ BASEFILE_LD_FLAGS = -Wl,-r \
 
 # Objcopy command used when constructing rumprun basefile manually.
 BASEFILE_OBJCOPY = ${OBJCOPY} -w -G "bmk_*" -G "rumpuser_*" -G "jsmn_*" -G __assert_fail \
-	     -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write -G _zf_log_output_lvl
+	     -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write \
+		 -G _zf_log_output_lvl -G "rumpns_*"
 
 # Example manual construction of Rumprun BASEFILE:
 # Create basefile binary

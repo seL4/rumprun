@@ -136,6 +136,26 @@ mincore(void *addr, size_t len, char *vec)
 	return -1;
 }
 
+int
+mprotect(void *addr, size_t len, int prot)
+{
+	struct sys_mprotect_args callarg;
+	register_t retval[2];
+	int error;
+
+	memset(&callarg, 0, sizeof(callarg));
+	SPARG(&callarg, addr) = addr;
+	SPARG(&callarg, len) = len;
+	SPARG(&callarg, prot) = prot;
+
+	error = rump_syscall(SYS_mprotect, &callarg, sizeof(callarg), retval);
+	errno = error;
+	if (error == 0) {
+		return 0;
+	}
+	return -1;
+}
+
 /*
  * We "know" that the following are stubs also in the kernel.  Risk of
  * them going out-of-sync is quite minimal ...
@@ -147,7 +167,6 @@ madvise(void *addr, size_t len, int adv)
 
 	return 0;
 }
-__strong_alias(mprotect,madvise);
 __strong_alias(minherit,madvise);
 __strong_alias(mlock,madvise);
 __strong_alias(mlockall,madvise);

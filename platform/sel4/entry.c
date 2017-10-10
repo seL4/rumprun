@@ -37,6 +37,8 @@
 #include <sel4/kernel.h>
 #include <sel4utils/stack.h>
 #include <rumprun-base/rumprun.h>
+#include <sys/mman.h>
+
 /* global static memory for init */
 static sel4utils_alloc_data_t alloc_data;
 
@@ -62,6 +64,88 @@ extern vspace_t *muslc_this_vspace;
 extern reservation_t muslc_brk_reservation;
 extern void *muslc_brk_reservation_start;
 sel4utils_res_t muslc_brk_reservation_memory;
+
+int rumpns_plat_mprotect(void *addr, size_t len, int prot);
+int rumpns_plat_mprotect(void *addr, size_t len, int prot) {
+
+    if (config_set(CONFIG_USE_LARGE_PAGES)) {
+        /* benchmarks use large pages, remapping them as small pages in order
+         * to mprotect them is not yet implemented */
+        return 0;
+    }
+
+    /* check addr is aligned */
+    uintptr_t uint_addr = (uintptr_t) addr;
+    if (uint_addr % BMK_PCPU_PAGE_SIZE != 0) {
+        return EINVAL;
+    }
+
+    /* align len to the nearest full page */
+    len = ROUND_UP(len, BMK_PCPU_PAGE_SIZE);
+
+    /* check len isn't too big */
+    if (uint_addr + len < uint_addr) {
+        return EINVAL;
+    }
+
+    reservation_t res = {0};
+    uintptr_t *cookies = NULL;
+    seL4_CPtr *caps = NULL;
+    int error = 0;
+
+    int num_pages = len / BMK_PCPU_PAGE_SIZE;
+    caps = calloc(num_pages, sizeof(seL4_CPtr));
+    if (caps == NULL) {
+        error = ENOMEM;
+        goto out;
+    }
+
+    cookies = calloc(num_pages, sizeof(uintptr_t));
+    if (cookies == NULL) {
+        error = ENOMEM;
+        goto out;
+    }
+
+    /* get all the caps and check the mapping is valid */
+    for (int i = 0; i < num_pages; i++) {
+        void *vaddr = (void *) (uint_addr + i * BMK_PCPU_PAGE_SIZE);
+        caps[i] = vspace_get_cap(&env.vspace, vaddr);
+        if (caps[i] == seL4_CapNull) {
+            error = ENOMEM;
+            goto out;
+        }
+        cookies[i] = vspace_get_cookie(&env.vspace, vaddr);
+    }
+
+    /* unmap them all */
+    vspace_unmap_pages(&env.vspace, addr, num_pages, BMK_PCPU_PAGE_SHIFT, VSPACE_PRESERVE);
+
+
+    /* remap with new rights */
+    seL4_CapRights_t rights = seL4_CapRights_new(false, prot & PROT_READ, prot & PROT_WRITE);
+    res = vspace_reserve_range_at(&env.vspace, addr, len, rights, true);
+    ZF_LOGF_IF(res.res == 0, "Failed to reserve range we just unmapped!");
+
+    error = vspace_map_pages_at_vaddr(&env.vspace, caps, cookies, addr, num_pages, BMK_PCPU_PAGE_SHIFT, res);
+    if (error) {
+        error = ENOMEM;
+    }
+
+out:
+    if (res.res) {
+        vspace_free_reservation(&env.vspace, res);
+    }
+
+    if (cookies) {
+        free(cookies);
+    }
+
+    if (caps) {
+        free(caps);
+    }
+
+    return error;
+}
 
 static void
 init_allocator(env_t env)
@@ -115,7 +199,11 @@ provide_vmem(env_t env)
 
     vspace_new_pages_config_t config;
     size_t rumprun_size = env->custom_simple.rumprun_memory_size;
-    int page_size_bits = sel4_page_size_bits_for_memory_region(rumprun_size);
+    int page_size_bits = BMK_PCPU_PAGE_SHIFT;
+    if (config_set(CONFIG_USE_LARGE_PAGES)) {
+        page_size_bits = sel4_page_size_bits_for_memory_region(rumprun_size);
+    }
+
     env->rump_mapping_page_size_bits = page_size_bits;
     env->rump_mapping_page_type = kobject_get_type(KOBJECT_FRAME, page_size_bits);
     ZF_LOGW_IF(rumprun_size % BIT(page_size_bits) != 0, "Warning: Memory size is being truncated by: 0x%zx", rumprun_size % BIT(page_size_bits));

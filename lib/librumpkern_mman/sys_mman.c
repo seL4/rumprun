@@ -262,7 +262,30 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 	return 0;
 }
 
-__strong_alias(sys_mprotect,sys_madvise);
+int plat_mprotect(void *addr, size_t len, int prot);
+
+int
+sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *retval)
+{
+    void *addr = SCARG(uap, addr);
+	size_t len = SCARG(uap, len);
+	int prot = SCARG(uap, prot);
+
+    if (len == 0) {
+        /* nothing to do */
+        return 0;
+    }
+
+    int error = plat_mprotect(addr, len, prot);
+    if (error != 0) {
+        *retval = -1;
+    }
+    return error;
+}
+
+/* Note - these functions are called by matching strong aliases in
+ * librumprun_base/syscall_mman.c and need to be kept in sync
+ */
 __strong_alias(sys_minherit,sys_madvise);
 __strong_alias(sys_mlock,sys_madvise);
 __strong_alias(sys_mlockall,sys_madvise);
