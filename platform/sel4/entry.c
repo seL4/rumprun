@@ -208,7 +208,7 @@ provide_vmem(env_t env)
     env->rump_mapping_page_type = kobject_get_type(KOBJECT_FRAME, page_size_bits);
     ZF_LOGW_IF(rumprun_size % BIT(page_size_bits) != 0, "Warning: Memory size is being truncated by: 0x%zx", rumprun_size % BIT(page_size_bits));
     size_t rumprun_pages = rumprun_size / BIT(page_size_bits);
-    printf("num pages %zd with size: %d bits\n", rumprun_pages, page_size_bits);
+    ZF_LOGI("num pages %zd with size: %d bits\n", rumprun_pages, page_size_bits);
     if (default_vspace_new_pages_config(rumprun_pages, page_size_bits, &config)) {
         ZF_LOGF("Failed to create config");
     }
@@ -219,7 +219,7 @@ provide_vmem(env_t env)
     osend = vspace_new_pages_with_config(&env->vspace, &config, seL4_CapRights_new(1, 1, 1));
     ZF_LOGF_IF(osend == NULL, "vspace returned null");
 
-    printf("Starting paddr: %p\n", osend);
+    ZF_LOGI("Starting paddr: %p\n", osend);
     bmk_pgalloc_loadmem((uintptr_t) osend, (uintptr_t) osend + rumprun_size);
 
     bmk_memsize = rumprun_size;
@@ -327,7 +327,6 @@ int init_rumprun(custom_simple_t *custom_simple)
     ZF_LOGF_IF(res != 0, "sel4utils_new_page_dma_alloc failed");
 #endif
 
-    bmk_printf("rump kernel bare metal bootstrap\n\n");
     x86_initclocks();
 
     bmk_sched_init();

@@ -91,7 +91,7 @@ bmk_platform_halt(const char *panicstring)
     if (panicstring) {
         bmk_printf("PANIC: %s\n", panicstring);
     }
-    bmk_printf("halted\n");
-    ZF_LOGF("All is well in the universe.\n");
+    bmk_printf("All is well in the universe.\n");
+    abort();
     for (;;);
 }
