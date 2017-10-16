@@ -34,7 +34,7 @@ void
 rumpuser_putchar(int c)
 {
 
-	bmk_printf("%c", c);
+	bmk_putchar(c);
 }
 
 void
