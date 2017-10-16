@@ -56,7 +56,7 @@ cons_init(void)
 	 * If the BIOS says no CRTC is present use the serial console if
 	 * available.
 	 */
-	if (bios_crtc_base == 0)
+	// if (bios_crtc_base == 0)
 		prefer_serial = 1;
 
 	if (prefer_serial && bios_com1_base != 0) {

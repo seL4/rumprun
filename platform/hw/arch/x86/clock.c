@@ -29,6 +29,7 @@
 
 #include <arch/x86/hypervisor.h>
 #include <arch/x86/var.h>
+#include <arch/x86/tsc.h>
 
 #include <bmk-core/core.h>
 #include <bmk-core/platform.h>
@@ -466,6 +467,10 @@ bmk_platform_cpu_clock_epochoffset(void)
  * Returns early if any interrupts are serviced, or if the requested delay is
  * too short.
  */
+ uint64_t ccount = 0;
+ uint64_t prev;
+ uint64_t ts;
+
 void
 bmk_platform_cpu_block(bmk_time_t until)
 {
@@ -531,9 +536,20 @@ bmk_platform_cpu_block(bmk_time_t until)
 	 */
 	s = spldepth;
 	spldepth = 0;
-	__asm__ __volatile__(
-		"sti;\n"
-		"hlt;\n"
-		"cli;\n");
-	spldepth = s;
+    prev = rdtsc_pure();
+
+    while(1) {
+        ts = rdtsc_pure();;
+        //
+        if ((ts - prev) < 150) {
+            asm volatile("cli" ::: "memory");
+            ccount += (unsigned long long)(ts - prev);
+            asm volatile("sti" ::: "memory");
+            prev = ts;
+        } else {
+            spldepth = s;
+            prev = ts;
+            return;
+        }
+    }
 }

@@ -37,6 +37,12 @@
 #define PCI_CONF_ADDR 0xcf8
 #define PCI_CONF_DATA 0xcfc
 
+static struct {
+    int intrs;
+    int bus;
+    int dev;
+    int function;
+} pci_data[BMK_MAXINTR];
 
 int
 rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val) {
@@ -56,11 +62,29 @@ rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val) {
 }
 
 int
+rumpcomp_pci_intr_type(void)
+{
+	return 0;  //PCI_INTR_TYPE_INTX;
+}
+
+int
+rumpcomp_pci_get_bdf(unsigned cookie, unsigned *bus, unsigned *dev, unsigned *function) {
+    if (cookie > BMK_MAXINTR) {
+        return 1;
+    }
+
+    *bus = pci_data[cookie].bus;
+    *dev = pci_data[cookie].dev;
+    *function = pci_data[cookie].function;
+    return 0;
+}
+
+int
 rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result) {
 	uint32_t res = 0;
 	switch (io_size){
 		case 1:
-			__asm__ __volatile__("inb %1, %0" : "=a"(res) : "d"((uint16_t)port));
+			__asm__ __volatile__("inb %%dx, %%al" : "=a"(res) : "d"((uint16_t)port));
 		break;
 		case 2:
 			__asm__ __volatile__("in %1, %0" : "=a"(res) : "d"((uint16_t)port));
@@ -128,6 +152,12 @@ rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
 		return BMK_EGENERIC;
 
 	intrs[cookie] = intrline;
+
+    pci_data[cookie].intrs = intrline;
+    pci_data[cookie].bus = bus;
+    pci_data[cookie].dev = device;
+    pci_data[cookie].function = fun;
+
 	return 0;
 }
 

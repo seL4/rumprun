@@ -56,15 +56,15 @@ SECTIONS
 		*(.data.*)
 	}
 	.tdata : {
-		_tdata_start = . ;
+		_rump_tdata_start = . ;
 		*(.tdata)
-		_tdata_end = . ;
+		_rump_tdata_end = . ;
 	}
 	_edata = . ;
 	.tbss : {
-		_tbss_start = . ;
+		_rump_tbss_start = . ;
 		*(.tbss)
-		_tbss_end = . ;
+		_rump_tbss_end = . ;
 	}
 
 	__bss_start = . ;

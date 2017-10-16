@@ -25,8 +25,10 @@
 
 #include <hw/types.h>
 #include <hw/kernel.h>
+#include <bmk-core/printf.h>
 
 #include <arch/x86/cons.h>
+#include <arch/x86/tsc.h>
 
 static uint16_t combase = 0;
 
@@ -42,6 +44,53 @@ serialcons_init(uint16_t combase_init, int speed)
 	outb(combase + COM_DLBH, divisor >> 8);
 	outb(combase + COM_LCTL, 0x03);
 	outb(combase + COM_FIFO, 0xc7);
+	outb(combase + 4, 0x0b); /* modem control register: set DTR/RTS/OUT2 */
+	inb(combase);     /* clear recevier port */
+	inb(combase + 5); /* clear line status port */
+	inb(combase + 6); /* clear modem status port */
+	outb(combase + COM_IER, 0x01);
+	// drain
+    while ((inb(combase + 5) & 1) != 0) {
+        inb(combase);
+    }
+
+}
+char reset_buffer[] = "reset";
+int pos = 0;
+uint64_t cpucount = 0;
+uint64_t cpucount2 = 0;
+extern uint64_t ccount;
+unsigned char getDebugChar(void);
+unsigned char getDebugChar(void)
+{
+    char c = 0;
+
+    while ((inb(combase + 5) & 1) == 0);
+
+    while ((inb(combase + 5) & 1) != 0) {
+        c = inb(combase);
+        if (c == reset_buffer[pos]) {
+            pos++;
+            if (pos == 5) {
+                outb(0x64, 0xFE);
+            }
+        } else {
+            pos = 0;
+        }
+		if (c == 'a') {
+			cpucount = rdtsc_pure();
+			ccount = 0;
+		}
+
+		if (c == 'b') {
+			cpucount2 = rdtsc_pure();
+			bmk_printf("tot: %ld\n idle: %ld\n", cpucount2 - cpucount, ccount);
+
+		}
+    }
+	if (c == '\r')
+		c = '\n';
+    return c;
 }
 
 void

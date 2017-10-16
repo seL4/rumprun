@@ -31,6 +31,7 @@
 #include <bmk-core/mainthread.h>
 #include <bmk-core/sched.h>
 #include <bmk-core/printf.h>
+#include <rumprun-base/rumprun.h>
 
 void
 x86_boot(struct multiboot_info *mbi)
@@ -42,8 +43,9 @@ x86_boot(struct multiboot_info *mbi)
 	cpu_init();
 	bmk_sched_init();
 	multiboot(mbi);
-
+	cpu_intr_init(4);
 	spl0();
+	struct rumprun_boot_config rumprun_config = {(char *)multiboot_cmdline, 1};
 
-	bmk_sched_startmain(bmk_mainthread, multiboot_cmdline);
+	bmk_sched_startmain(bmk_mainthread, &rumprun_config);
 }

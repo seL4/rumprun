@@ -155,6 +155,7 @@ bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, int flags)
 		bmk_platform_halt("bmk_isr_rumpkernel: routed intr mismatch");
 
 	if ((error = cpu_intr_init(intr)) != 0) {
+		bmk_printf("%d", intr);
 		bmk_platform_halt("bmk_isr_rumpkernel: cpu_intr_init");
 	}
 	ih->ih_fun = func;
@@ -165,12 +166,24 @@ bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, int flags)
 		isr_lowest = intr;
 }
 
+void serialcons_putc(int c);
+unsigned char getDebugChar(void);
+
 void
 isr(int which)
 {
+	if ((which & 1<<4) != 0) {
+		serialcons_putc(getDebugChar());
+		cpu_intr_ack(1<<4);
+		which &= ~(1<<4);
+	}
 
 	/* schedule the interrupt handler */
 	isr_todo |= which;
+		if (isr_todo == 0) {
+		return;
+	}
+
 	bmk_sched_wake(isr_thread);
 }
 
