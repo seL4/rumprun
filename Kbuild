@@ -13,6 +13,16 @@ PROJECT_BASE := $(PWD)
 include ${CURRENT_DIR}/platform/sel4/rumprunlibs.mk
 
 ifeq ($(CONFIG_RUMPRUN), y)
+
+mrproper: clean_rump
+
+.PHONY:clean_rump
+clean_rump:
+	@echo " [Rumprun] Deleting rumprun build objects"
+	$Qrm -rf $(SEL4_RROBJ)
+	$Qrm -rf $(SEL4_RRDEST)
+	$Qrm -rf ${CURRENT_DIR}/.rumpstamp
+
 # These following rules are for loading a directory into a rumprun image
 # via the librumprunfs library.  Setting CONFIG_RUMPRUN_COOKFS_DIR to a
 # valid path from the root of the project will result in that folder appearing
