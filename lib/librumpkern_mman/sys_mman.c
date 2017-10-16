@@ -264,6 +264,7 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 
 int plat_mprotect(void *addr, size_t len, int prot);
 
+#pragma weak plat_mprotect
 int
 sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *retval)
 {
@@ -275,7 +276,10 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *ret
         /* nothing to do */
         return 0;
     }
-
+	if (plat_mprotect == NULL) {
+		/* There isn't an implementation */
+		return 0;
+	}
     int error = plat_mprotect(addr, len, prot);
     if (error != 0) {
         *retval = -1;
