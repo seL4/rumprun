@@ -32,6 +32,8 @@ void	bmk_printf(const char *, ...)
 int	bmk_snprintf(char *, unsigned long, const char *, ...)
 	__attribute__((__format__(__printf__,3,4)));
 
+void bmk_putchar(char c);
+
 /* definition of va_list might cause collisions, so hide it by default */
 #ifdef _BMK_PRINTF_VA
 typedef __builtin_va_list va_list;

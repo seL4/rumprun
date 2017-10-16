@@ -181,6 +181,10 @@ bmk_snprintf(char *bf, unsigned long size, const char *fmt, ...)
 	return retval;
 }
 
+void bmk_putchar(char c) {
+	cons_putchar(c, 0);
+}
+
 /*
  * bmk_vsnprintf: print a message to a buffer [already have va_list]
  */
