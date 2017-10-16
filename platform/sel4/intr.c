@@ -119,8 +119,10 @@ doisr(void *arg)
             }
             /* Ack seL4 interrupt now that it has been handled */
             if (is_hw_pci_config(&env.custom_simple)) {
-                int error = seL4_IRQHandler_Ack(env.caps[i]);
-                ZF_LOGF_IFERR(error, "seL4_IRQHandler_Ack failed");
+                if (!config_set(CONFIG_USE_MSI_ETH)) {
+                    int error = seL4_IRQHandler_Ack(env.caps[i]);
+                    ZF_LOGF_IFERR(error, "seL4_IRQHandler_Ack failed");
+                }
             } else {
                 env.custom_simple.ethernet_intr_config.eth_irq_acknowledge();
             }
