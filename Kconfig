@@ -16,6 +16,7 @@ menuconfig RUMPRUN
                HAVE_LIB_ELF && HAVE_LIB_SEL4_MUSLC_SYS && HAVE_LIB_SEL4_ALLOCMAN && HAVE_LIB_PLATSUPPORT && \
                HAVE_LIB_SEL4_PLAT_SUPPORT && HAVE_LIB_SEL4_SERIAL_SERVER
     select HAVE_RUMPRUN
+    select LIB_SEL4_MUSLC_SYS_ARCH_PUTCHAR_WEAK
     help
         Rumprun unikernel
 

@@ -42,6 +42,7 @@
 #include <bmk-core/printf.h>
 
 #include <stdio.h>
+#include <arch_stdio.h>
 
 static void (*vcons_putc)(int) = (void(*)(int))putchar;
 static void (*vcons_flush)(void) = NULL;
@@ -68,6 +69,10 @@ void cons_putc(int c)
     if (c == '\n' || shmem_index == context.shmem_size) {
         cons_flush();
     }
+}
+
+void __arch_putchar(int c) {
+    vcons_putc(c);
 }
 
 void cons_init(void)
