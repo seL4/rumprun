@@ -20,6 +20,16 @@ menuconfig RUMPRUN
     help
         Rumprun unikernel
 
+config USE_LARGE_PAGES
+    bool "use large pages (disables mprotect)"
+    default n
+    depends on RUMPRUN
+    help
+        Use large pages for rumprun backing memory.  This reduces the amount of book keeping required
+        to track the pages created and also reduces initialisation time.  However, mprotect depends on
+        4k pages in order to remap the pages with new permissions.  Thus, enabling large pages results in
+        disabling the stack guard page functionality.  Use at own risk.
+
 config RUMPRUN_TMPFS_NUM_MiB
     int "Size of Rumprun tmpfs mount in MiB"
     default 1
