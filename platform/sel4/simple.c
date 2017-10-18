@@ -128,11 +128,12 @@ int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace
     existing_frames[1] = ((char *) init_data) + PAGE_SIZE_4K;
     existing_frames[2] = seL4_GetIPCBuffer();
     ZF_LOGF_IF(init_data->stack_pages == 0, "No stack");
-    int i;
-    for (i = 0; i < init_data->stack_pages; i++) {
-        existing_frames[i + 3] = init_data->stack + (i * PAGE_SIZE_4K);
+
+    int frames_index = 3;
+    for (int i = 0; i < init_data->stack_pages; i++, frames_index++) {
+        existing_frames[frames_index] = init_data->stack + (i * PAGE_SIZE_4K);
     }
-    existing_frames[i + 3] = NULL;
+    existing_frames[frames_index] = NULL;
     return sel4utils_bootstrap_vspace(vspace, alloc_data, simple_get_pd(custom_simple->simple), vka,
                                       NULL, NULL, existing_frames);
 
