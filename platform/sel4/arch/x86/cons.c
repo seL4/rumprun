@@ -44,7 +44,8 @@
 #include <stdio.h>
 #include <arch_stdio.h>
 
-static void (*vcons_putc)(int) = (void(*)(int))putchar;
+void debug_putchar(int c);
+static void (*vcons_putc)(int) = debug_putchar;
 static void (*vcons_flush)(void) = NULL;
 
 /* context for talking to the serial server */
@@ -69,6 +70,12 @@ void cons_putc(int c)
     if (c == '\n' || shmem_index == context.shmem_size) {
         cons_flush();
     }
+}
+
+void debug_putchar(int c) {
+#ifdef CONFIG_DEBUG_BUILD
+    seL4_DebugPutChar(c);
+#endif
 }
 
 void __arch_putchar(int c) {
