@@ -184,8 +184,8 @@ bmk_platform_cpu_block(bmk_time_t until)
     }
 
     env.should_wakeup = 1;
-    seL4_Wait(env.custom_simple.timer_config.timer_ntfn, NULL);
     bmk_platform_splx(0);
+    seL4_Wait(env.custom_simple.timer_config.timer_ntfn, NULL);
 
     env.should_wakeup = 0;
 
