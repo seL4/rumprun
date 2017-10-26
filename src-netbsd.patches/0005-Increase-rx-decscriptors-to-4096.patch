@@ -1,0 +1,25 @@
+From 2d933578dc6e1984e215887793716a02beed6153 Mon Sep 17 00:00:00 2001
+From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
+Date: Thu, 26 Oct 2017 12:39:41 +1100
+Subject: [PATCH 5/5] Increase rx decscriptors to 4096
+
+---
+ sys/dev/pci/if_wm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sys/dev/pci/if_wm.c b/sys/dev/pci/if_wm.c
+index 2bc24fcd..66801080 100644
+--- a/sys/dev/pci/if_wm.c
++++ b/sys/dev/pci/if_wm.c
+@@ -205,7 +205,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
+  * packet.  We allocate 256 receive descriptors, each with a 2k
+  * buffer (MCLBYTES), which gives us room for 50 jumbo packets.
+  */
+-#define	WM_NRXDESC		256
++#define	WM_NRXDESC		4096
+ #define	WM_NRXDESC_MASK		(WM_NRXDESC - 1)
+ #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
+ #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
+-- 
+2.11.0
+

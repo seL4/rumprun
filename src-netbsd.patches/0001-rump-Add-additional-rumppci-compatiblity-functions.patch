@@ -1,7 +1,7 @@
-From 0238b6123341b89f5317b7d4b58969a69f5f2d35 Mon Sep 17 00:00:00 2001
+From fb6fd90e5ad13c4c61f435a245ae4a49020dcbc8 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@Data61.csiro.au>
 Date: Tue, 14 Feb 2017 15:10:12 +1100
-Subject: [PATCH 1/4] rump: Add additional rumppci compatiblity functions
+Subject: [PATCH 1/5] rump: Add additional rumppci compatiblity functions
 
 ---
  sys/rump/dev/lib/libpci/pci_user.h          |  4 ++++

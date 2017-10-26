@@ -1,7 +1,7 @@
-From 340c3b116fdb08f4801acf3434a6d4d0cfa05443 Mon Sep 17 00:00:00 2001
+From 9a23ae7a5ef941945b700b2149acfa5adb5a7911 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Mon, 24 Jul 2017 15:16:00 +1000
-Subject: [PATCH 3/4] rump: Enumerate extra pci buses
+Subject: [PATCH 3/5] rump: Enumerate extra pci buses
 
 ---
  sys/rump/dev/lib/libpci/Makefile   | 2 +-
