@@ -222,7 +222,7 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 
         cspacepath_t path2;
         error = vka_mint_object(&env.vka, &env.pci_notification, &path2,
-                                seL4_AllRights, seL4_CapData_Badge_new(1 << (pci_data[cookie].intrs)));
+                                seL4_AllRights, 1 << (pci_data[cookie].intrs));
         ZF_LOGF_IF(error != 0, "Failed to mint notification object\n");
         error = seL4_IRQHandler_SetNotification(env.caps[pci_data[cookie].intrs], path2.capPtr);
         ZF_LOGF_IF(error != 0, "Failed to bind IRQ to notification\n");
