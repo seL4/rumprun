@@ -57,11 +57,16 @@ $(SOURCE_DIR)/.rumpstamp:
 	cd $(SOURCE_DIR)/buildrump.sh && git am ../buildrump.sh.patches/*
 	touch $@
 
+# Suppress rump build output unless V is set
+ifeq ($(V),)
+QUIET:=-q -q
+endif
+
 rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
-	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=gcc ./build-rr.sh \
+	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=gcc ./build-rr.sh $(QUIET) \
 	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(SOURCE_DIR))) \
 	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(SOURCE_DIR))) \
 	sel4 -- $(RUMPKERNEL_FLAGS)
