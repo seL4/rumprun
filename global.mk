@@ -6,6 +6,17 @@ ifeq (${RRDEST},)
 $(error invalid RUMPRUN_MKCONF)
 endif
 
+# Suppress make from printing commands if BUILD_QUIET is set
+ifeq (${BUILD_QUIET}, -qq)
+	MAKE_SILENT = -s
+else
+ifeq (${BUILD_QUIET}, -q)
+	MAKE_SILENT = -s
+else
+	MAKE_SILENT =
+endif
+endif
+
 DBG?=	 -O2 -g
 CFLAGS+= -std=gnu99 ${DBG}
 CFLAGS+= -fno-stack-protector -ffreestanding

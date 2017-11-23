@@ -98,6 +98,7 @@ parseargs ()
 	RUMPSRC=src-netbsd
 	STDJ=-j4
 	EXTSRC=
+	MAKE_SILENT=
 
 	DObuild=false
 	DOinstall=false
@@ -125,6 +126,7 @@ parseargs ()
 			;;
 		'q')
 			BUILD_QUIET=${BUILD_QUIET:=-}q
+			MAKE_SILENT=-s
 			;;
 		'h'|'?')
 			helpme
@@ -405,8 +407,8 @@ EOF
 buildapptools ()
 {
 
-	${MAKE} -C app-tools BUILDRR=true
-	${MAKE} -C app-tools BUILDRR=true install
+	${MAKE} $MAKE_SILENT -C app-tools BUILDRR=true
+	${MAKE} $MAKE_SILENT -C app-tools BUILDRR=true install
 }
 
 builduserspace ()
@@ -429,9 +431,9 @@ buildpci ()
 	if eval ${PLATFORM_PCI_P}; then
 		(
 			cd ${PLATFORMDIR}/pci
-			${RUMPMAKE} ${STDJ} obj
-			${RUMPMAKE} ${STDJ} dependall
-			${RUMPMAKE} ${STDJ} install
+			${RUMPMAKE} $MAKE_SILENT ${STDJ} obj
+			${RUMPMAKE} $MAKE_SILENT ${STDJ} dependall
+			${RUMPMAKE} $MAKE_SILENT ${STDJ} install
 		)
 	fi
 }
@@ -498,15 +500,15 @@ dobuild ()
 	    || die cannot create libdir
 
 	${KERNONLY} || buildapptools
-	${MAKE} -C ${PLATFORMDIR} links
+	${MAKE} $MAKE_SILENT -C ${PLATFORMDIR} links
 	${KERNONLY} || builduserspace
 
 	buildpci
 
 	# do final build of the platform bits
 	( cd ${PLATFORMDIR} \
-	    && ${MAKE} BUILDRR=true \
-	    && ${MAKE} BUILDRR=true install || exit 1)
+	    && ${MAKE} $MAKE_SILENT BUILDRR=true \
+	    && ${MAKE} $MAKE_SILENT BUILDRR=true install || exit 1)
 	[ $? -eq 0 ] || die platform make failed!
 }
 

@@ -41,9 +41,9 @@ define BUILDLIB_target
 .PHONY: $${RROBJLIB}/${1}/${1}.a
 $${RROBJLIB}/${1}/${1}.a:
 	( cd ${2}/${1} \
-	    && ${RUMPMAKE} MAKEOBJDIR=${RROBJLIB}/${1} ${3} obj \
-	    && ${RUMPMAKE} MAKEOBJDIR=${RROBJLIB}/${1} ${3} includes \
-	    && ${RUMPMAKE} BMKHEADERS=$${RROBJ}/include \
+	    && ${RUMPMAKE} $(MAKE_SILENT) MAKEOBJDIR=${RROBJLIB}/${1} ${3} obj \
+	    && ${RUMPMAKE} $(MAKE_SILENT) MAKEOBJDIR=${RROBJLIB}/${1} ${3} includes \
+	    && ${RUMPMAKE} $(MAKE_SILENT) BMKHEADERS=$${RROBJ}/include \
 		MAKEOBJDIR=${RROBJLIB}/${1} ${3} dependall )
 
 .PHONY: ${1}_install
@@ -59,13 +59,13 @@ ${1}_install2:
 .PHONY: ${1}_install_custom
 ${1}_install_custom:
 	( cd ${2}/${1} && \
-	    ${RUMPMAKE} MAKEOBJDIR=${RROBJLIB}/${1} \
+	    ${RUMPMAKE} $(MAKE_SILENT) MAKEOBJDIR=${RROBJLIB}/${1} \
 		LIBDIR=$${INSTALLDIR_LIBPLAT} DESTDIR=$${INSTALLDIR} install )
 
 .PHONY: ${1}_clean
 ${1}_clean:
 	( cd ${2}/${1} && \
-	    ${RUMPMAKE} MAKEOBJDIR=${RROBJLIB}/${1} ${3} cleandir )
+	    ${RUMPMAKE} $(MAKE_SILENT) MAKEOBJDIR=${RROBJLIB}/${1} ${3} cleandir )
 endef
 
 $(eval $(call BUILDLIB_target,libbmk_core,${PLIBDIR}))
