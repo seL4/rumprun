@@ -66,7 +66,7 @@ rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_B
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
-	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=gcc ./build-rr.sh $(QUIET) \
+	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(CROSS_COMPILE)gcc CXX=$(CROSS_COMPILE)g++ ./build-rr.sh $(QUIET) \
 	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(SOURCE_DIR))) \
 	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(SOURCE_DIR))) \
 	sel4 -- $(RUMPKERNEL_FLAGS)
