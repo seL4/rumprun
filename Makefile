@@ -62,11 +62,29 @@ ifeq ($(V),)
 QUIET:=-q -q
 endif
 
-rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp
+# This wraps the call to ccache in a shell script because the rumprun build doesn't
+# expand the variable correctly if we try CC=ccache gcc.
+# See here for more info: https://wiki.netbsd.org/tutorials/using_ccache_with_build_sh/
+ccache_wrapper_contents = \
+\#!/bin/sh \n\
+exec $(CCACHE) $1 \"\$$@\"\n
+
+%-wrapper:
+	echo -e "$(call ccache_wrapper_contents, $*)" | sed -e 's/^[ ]//' >$(@)
+	chmod +x $@
+
+rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp \
+	$(CROSS_COMPILE)gcc-wrapper $(CROSS_COMPILE)g++-wrapper
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.
 	@echo "[Building rumprun]"
-	cd $(SOURCE_DIR) && env -i PATH=${PATH2} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(CROSS_COMPILE)gcc CXX=$(CROSS_COMPILE)g++ ./build-rr.sh $(QUIET) \
+	cd $(SOURCE_DIR) && env -i \
+	PATH=${PATH2} \
+	SEL4_ARCH=$(SEL4_ARCH) \
+	PROJECT_BASE=$(PWD) \
+	CC=$(BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper \
+	CXX=$(BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
+	./build-rr.sh $(QUIET) \
 	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(SOURCE_DIR))) \
 	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(SOURCE_DIR))) \
 	sel4 -- $(RUMPKERNEL_FLAGS)
