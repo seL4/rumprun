@@ -58,26 +58,12 @@ struct intrhand {
 
 SLIST_HEAD(isr_ihead, intrhand);
 static struct isr_ihead isr_ih[INTR_LEVELS];
-static int isr_routed[INTR_LEVELS];
-#define INTR_ROUTED_NOIDEA	0
-#define INTR_ROUTED_YES		1
-#define INTR_ROUTED_NO		2
 
 static volatile unsigned int isr_todo;
 static unsigned int isr_lowest = sizeof(isr_todo) * 8;
 
 static struct bmk_thread *isr_thread;
 
-static int
-routeintr(UNUSED int i)
-{
-
-#ifdef BMK_SCREW_INTERRUPT_ROUTING
-    return INTR_ROUTED;
-#else
-    return i;
-#endif
-}
 
 /* thread context we use to deliver interrupts to the rump kernel */
 static void
@@ -110,10 +96,6 @@ doisr(void *arg)
             }
             isrcopy &= ~(BIT(i));
 
-            if (isr_routed[i] == INTR_ROUTED_YES) {
-                i = routeintr(i);
-            }
-
             SLIST_FOREACH(ih, &isr_ih[i], ih_entries) {
                 ih->ih_fun(ih->ih_arg);
             }
@@ -145,17 +127,11 @@ doisr(void *arg)
 }
 
 void
-bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, int flags)
+bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr)
 {
     struct intrhand *ih;
-    int icheck, routedintr;
-
     if (intr > sizeof(isr_todo) * 8 || intr > BMK_MAXINTR) {
         bmk_platform_halt("bmk_isr_rumpkernel: intr");
-    }
-
-    if ((flags & ~BMK_INTR_ROUTED) != 0) {
-        bmk_platform_halt("bmk_isr_rumpkernel: flags");
     }
 
     ih = bmk_xmalloc_bmk(sizeof(*ih));
@@ -163,28 +139,10 @@ bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, int flags)
         bmk_platform_halt("bmk_isr_rumpkernel: xmalloc");
     }
 
-    /* check for conflicts */
-    if (flags & BMK_INTR_ROUTED) {
-        if (isr_routed[intr] == INTR_ROUTED_NOIDEA) {
-            isr_routed[intr] = INTR_ROUTED_YES;
-        }
-        icheck = INTR_ROUTED_YES;
-        routedintr = routeintr(intr);
-    } else {
-        if (isr_routed[intr] == INTR_ROUTED_NOIDEA) {
-            isr_routed[intr] = INTR_ROUTED_NO;
-        }
-        icheck = INTR_ROUTED_NO;
-        routedintr = intr;
-    }
-    if (isr_routed[intr] != icheck) {
-        bmk_platform_halt("bmk_isr_rumpkernel: routed intr mismatch");
-    }
-
     ih->ih_fun = func;
     ih->ih_arg = arg;
 
-    SLIST_INSERT_HEAD(&isr_ih[routedintr], ih, ih_entries);
+    SLIST_INSERT_HEAD(&isr_ih[intr], ih, ih_entries);
     if ((unsigned)intr < isr_lowest) {
         isr_lowest = intr;
     }

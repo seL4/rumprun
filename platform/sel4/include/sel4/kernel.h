@@ -23,10 +23,9 @@ void cons_puts(const char *);
 
 int cpu_intr_init(int);
 
-#define BMK_INTR_ROUTED 0x01
 void isr(int);
 void intr_init(void);
-void bmk_isr_rumpkernel(int (*)(void *), void *, int, int);
+void bmk_isr_rumpkernel(int (*)(void *), void *, int);
 extern volatile int spldepth;
 
 
