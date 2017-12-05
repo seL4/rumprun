@@ -49,6 +49,9 @@
 #define INTR_LEVELS (BMK_MAXINTR+1)
 #define INTR_ROUTED BMK_MAXINTR
 
+/* This is arbitrary and is safe to increment */
+#define SOFT_INTRS 1
+
 struct intrhand {
     int (*ih_fun)(void *);
     void *ih_arg;
@@ -58,43 +61,26 @@ struct intrhand {
 
 SLIST_HEAD(isr_ihead, intrhand);
 static struct isr_ihead isr_ih[INTR_LEVELS];
+static struct isr_ihead isr_ih_soft[SOFT_INTRS];
 
 static volatile unsigned int isr_todo;
+static volatile unsigned int isr_todo_soft;
 static unsigned int isr_lowest = sizeof(isr_todo) * 8;
+static unsigned int isr_soft_lowest = SOFT_INTRS-1;
 
 static struct bmk_thread *isr_thread;
 
 
-/* thread context we use to deliver interrupts to the rump kernel */
-static void
-doisr(void *arg)
-{
-    int i, totwork = 0;
+static void process_handlers(isr_type_t type, unsigned int isrcopy, unsigned lowest) {
+    for (int i = lowest; isrcopy; i++) {
+        struct intrhand *ih;
 
-    rumpuser__hyp.hyp_schedule();
-    rumpuser__hyp.hyp_lwproc_newlwp(0);
-    rumpuser__hyp.hyp_unschedule();
-
-    bmk_platform_splhigh();
-    for (;;) {
-        unsigned int isrcopy;
-        int nlocks = 1;
-
-        isrcopy = isr_todo;
-        isr_todo = 0;
-        bmk_platform_splx(0);
-
-        totwork |= isrcopy;
-
-        rumpkern_sched(nlocks, NULL);
-        for (i = isr_lowest; isrcopy; i++) {
-            struct intrhand *ih;
-
-            bmk_assert(i < sizeof(isrcopy) * 8);
-            if ((isrcopy & (BIT(i))) == 0) {
-                continue;
-            }
-            isrcopy &= ~(BIT(i));
+        bmk_assert(i < sizeof(isrcopy) * 8);
+        if ((isrcopy & (BIT(i))) == 0) {
+            continue;
+        }
+        isrcopy &= ~(BIT(i));
+        if (type == HARDWARE_INT) {
 
             SLIST_FOREACH(ih, &isr_ih[i], ih_entries) {
                 ih->ih_fun(ih->ih_arg);
@@ -108,11 +94,50 @@ doisr(void *arg)
             } else {
                 env.custom_simple.ethernet_intr_config.eth_irq_acknowledge();
             }
+        } else if (type == SOFTWARE_EVENT) {
+            SLIST_FOREACH(ih, &isr_ih_soft[i], ih_entries) {
+                ih->ih_fun(ih->ih_arg);
+            }
         }
+    }
+
+}
+
+/* thread context we use to deliver interrupts to the rump kernel */
+static void
+doisr(void *arg)
+{
+    int totwork = 0;
+
+    rumpuser__hyp.hyp_schedule();
+    rumpuser__hyp.hyp_lwproc_newlwp(0);
+    rumpuser__hyp.hyp_unschedule();
+
+    bmk_platform_splhigh();
+    for (;;) {
+        unsigned int isrcopy;
+        int nlocks = 1;
+
+        /* Process hardware interrupt handlers */
+        isrcopy = isr_todo;
+        isr_todo = 0;
+        bmk_platform_splx(0);
+        totwork |= isrcopy;
+        rumpkern_sched(nlocks, NULL);
+        process_handlers(HARDWARE_INT, isrcopy, isr_lowest);
+        rumpkern_unsched(&nlocks, NULL);
+
+        /* Process software event handlers */
+        bmk_platform_splhigh();
+        isrcopy = isr_todo_soft;
+        isr_todo_soft = 0;
+        bmk_platform_splx(0);
+        rumpkern_sched(nlocks, NULL);
+        process_handlers(SOFTWARE_EVENT, isrcopy, isr_soft_lowest);
         rumpkern_unsched(&nlocks, NULL);
 
         bmk_platform_splhigh();
-        if (isr_todo) {
+        if (isr_todo || isr_todo_soft) {
             continue;
         }
 
@@ -126,33 +151,56 @@ doisr(void *arg)
     }
 }
 
-void
-bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr)
-{
-    struct intrhand *ih;
-    if (intr > sizeof(isr_todo) * 8 || intr > BMK_MAXINTR) {
-        bmk_platform_halt("bmk_isr_rumpkernel: intr");
+static int alloc_number(void) {
+    static int intr_reserved = 0;
+    if (intr_reserved >= SOFT_INTRS) {
+        bmk_platform_halt("No more interrupt slots available.");
     }
+    intr_reserved++;
+    return intr_reserved -1;
+}
 
-    ih = bmk_xmalloc_bmk(sizeof(*ih));
+int
+bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, isr_type_t type)
+{
+    if (type == SOFTWARE_EVENT) {
+        intr = alloc_number();
+    } else if (type == HARDWARE_INT) {
+
+        if (intr > sizeof(isr_todo) * 8 || intr > BMK_MAXINTR) {
+            bmk_platform_halt("bmk_isr_rumpkernel: intr");
+        }
+
+    }
+    struct intrhand *ih = bmk_xmalloc_bmk(sizeof(*ih));
     if (!ih) {
         bmk_platform_halt("bmk_isr_rumpkernel: xmalloc");
     }
 
     ih->ih_fun = func;
     ih->ih_arg = arg;
+    if (type == HARDWARE_INT) {
 
-    SLIST_INSERT_HEAD(&isr_ih[intr], ih, ih_entries);
-    if ((unsigned)intr < isr_lowest) {
-        isr_lowest = intr;
+        SLIST_INSERT_HEAD(&isr_ih[intr], ih, ih_entries);
+        if ((unsigned)intr < isr_lowest) {
+            isr_lowest = intr;
+        }
+    } else if (type == SOFTWARE_EVENT) {
+        SLIST_INSERT_HEAD(&isr_ih_soft[intr], ih, ih_entries);
+        if ((unsigned)intr < isr_soft_lowest) {
+            isr_soft_lowest = intr;
+        }
     }
+    return intr;
 }
 
 void
-isr(int which)
+isr(int which, int soft_which)
 {
     /* schedule the interrupt handler */
+    isr_todo_soft |= soft_which;
     isr_todo |= which;
+
     bmk_sched_wake(isr_thread);
 }
 
@@ -163,6 +211,10 @@ intr_init(void)
 
     for (i = 0; i < INTR_LEVELS; i++) {
         SLIST_INIT(&isr_ih[i]);
+    }
+
+    for (i = 0; i < SOFT_INTRS; i++) {
+        SLIST_INIT(&isr_ih_soft[i]);
     }
 
     isr_thread = bmk_sched_create("isrthr", NULL, 0, doisr, NULL, NULL, 0);

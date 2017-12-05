@@ -228,7 +228,7 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
         ZF_LOGF_IF(error != 0, "Failed to bind IRQ to notification\n");
     }
 
-    bmk_isr_rumpkernel(handler, data, pci_data[cookie].intrs);
+    bmk_isr_rumpkernel(handler, data, pci_data[cookie].intrs, HARDWARE_INT);
     return &pci_data[cookie].intrs;
 }
 

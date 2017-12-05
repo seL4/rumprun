@@ -225,7 +225,7 @@ provide_vmem(env_t env)
     bmk_memsize = rumprun_size;
 }
 
-void rump_irq_handle(int intr)
+void rump_irq_handle(int intr, int soft_intr)
 {
     sync_bin_sem_wait(&env.spl_semaphore);
 
@@ -236,7 +236,7 @@ void rump_irq_handle(int intr)
 
     env.mask_the_mask = 1;
 
-    isr(intr);
+    isr(intr, soft_intr);
     sync_bin_sem_post(&env.spl_semaphore);
     env.mask_the_mask = 0;
 
@@ -264,7 +264,7 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     while (1) {
         seL4_Word sender_badge;
         seL4_Wait(env.pci_notification.cptr, &sender_badge);
-        rump_irq_handle(sender_badge);
+        rump_irq_handle(sender_badge, 0);
     }
 }
 

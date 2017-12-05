@@ -23,9 +23,14 @@ void cons_puts(const char *);
 
 int cpu_intr_init(int);
 
-void isr(int);
+typedef enum {
+    HARDWARE_INT,
+    SOFTWARE_EVENT,
+} isr_type_t;
+
+void isr(int, int);
 void intr_init(void);
-void bmk_isr_rumpkernel(int (*)(void *), void *, int);
+int bmk_isr_rumpkernel(int (*)(void *), void *, int, isr_type_t);
 extern volatile int spldepth;
 
 
