@@ -33,6 +33,9 @@ SEL4_MACHINE_ARCH?= ${MACHINE_GNU_ARCH}
 
 LDSCRIPT:=	$(abspath stage2.lds)
 SRCS+=		entry.c undefs.c kernel.c intr.c simple.c
+
+INSTALLTGTS+=	librumpsel4_stdio_install
+
 include ../Makefile.inc
 include arch/${ARCHDIR}/Makefile.inc
 
@@ -45,7 +48,11 @@ SEL4_INSTALL_HEADERS := include/sel4/rumprun
 
 .PHONY:	clean cleandir all
 
-all: links archdirs ${MAINOBJ} ${TARGETS}
+all: links archdirs ${MAINOBJ} ${TARGETS} extralibs
+$(eval $(call BUILDLIB_target,librumpsel4_stdio,.))
+
+extralibs: ${RROBJLIB}/librumpsel4_stdio/librumpsel4_stdio.a
+
 
 # These are required to provide hardware info to rumprun/libs/*
 ${RROBJ}/include/sel4/machine:
