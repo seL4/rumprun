@@ -75,6 +75,22 @@ __weak_alias(rumprun_main8,rumprun_notmain);
 __weak_alias(rump_init_server,rumprun_enosys);
 
 int rumprun_cold = 1;
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
+
+/* Tests for the existence of stdio files.  If present, the current descriptor
+   is closed and the new file reopened */
+static void reopen_stdios(void) {
+	FILE *FDS[] = {stdin, stdout, stderr};
+	const char *PERMS[] = {"r", "w", "w"};
+	const char *PATHS[] = {"/dev/stdin", "/dev/stdout", "/dev/stderr"};
+	for (unsigned int i= 0; i < ARRAY_SIZE(FDS); i++) {
+		if (access(PATHS[i], F_OK ) != -1) {
+			/* file exists */
+			freopen(PATHS[i], PERMS[i], FDS[i]);
+		}
+	}
+}
 
 void
 rumprun_boot(struct rumprun_boot_config *config)
@@ -115,6 +131,11 @@ rumprun_boot(struct rumprun_boot_config *config)
 	} else {
 		warnx("FAILED: mount tmpfs on /tmp: %s", strerror(tmpfserrno));
 	}
+
+	/* Test for presence of stdio files and reopen if they are present.
+	   This makes it possible for stdio driver modules to be loaded that
+	   override the basic rumpkernel cons.c implementation. */
+	reopen_stdios();
 
 	/*
 	 * We set duplicate address detection off for
