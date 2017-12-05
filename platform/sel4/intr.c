@@ -107,8 +107,6 @@ static void process_handlers(isr_type_t type, unsigned int isrcopy, unsigned low
 static void
 doisr(void *arg)
 {
-    int totwork = 0;
-
     rumpuser__hyp.hyp_schedule();
     rumpuser__hyp.hyp_lwproc_newlwp(0);
     rumpuser__hyp.hyp_unschedule();
@@ -122,7 +120,6 @@ doisr(void *arg)
         isrcopy = isr_todo;
         isr_todo = 0;
         bmk_platform_splx(0);
-        totwork |= isrcopy;
         rumpkern_sched(nlocks, NULL);
         process_handlers(HARDWARE_INT, isrcopy, isr_lowest);
         rumpkern_unsched(&nlocks, NULL);
@@ -146,7 +143,6 @@ doisr(void *arg)
 
         bmk_platform_splx(0);
         bmk_sched_block();
-        totwork = 0;
         bmk_platform_splhigh();
     }
 }
