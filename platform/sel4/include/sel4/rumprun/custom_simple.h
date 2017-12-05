@@ -76,6 +76,9 @@ typedef struct custom_simple {
     pci_config_config_t pci_config_config;
     ethernet_intr_config_t ethernet_intr_config;
     seL4_CPtr rpc_ep;
+    void* stdio_buf[3];
+    seL4_CPtr stdio_ep[3];
+    void (*get_char_handler)(void);
 } custom_simple_t;
 
 

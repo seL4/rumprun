@@ -268,6 +268,22 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     }
 }
 
+static int stdio_handler(void * UNUSED _a) {
+    if (env.custom_simple.get_char_handler) {
+        env.custom_simple.get_char_handler();
+    }
+    return 0;
+}
+
+static void wait_for_stdio_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c) {
+    int intr = bmk_isr_rumpkernel(stdio_handler, NULL, -1, SOFTWARE_EVENT);
+    while (1) {
+        seL4_Word sender_badge;
+        seL4_Wait(env.custom_simple.stdio_ep[0], &sender_badge);
+        rump_irq_handle(0, BIT(intr));
+    }
+}
+
 int init_rumprun(custom_simple_t *custom_simple)
 {
     if (custom_simple != &env.custom_simple) {
@@ -307,6 +323,10 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.pci_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");
+    if (!custom_simple->camkes) {
+        res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.stdio_thread);
+        ZF_LOGF_IF(res != 0, "Configure thread failed");
+    }
 
 
     res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.custom_simple) - 1);
@@ -332,6 +352,11 @@ int init_rumprun(custom_simple_t *custom_simple)
     bmk_sched_init();
     provide_vmem(&env);
     intr_init();
+
+    if (!custom_simple->camkes) {
+        res = sel4utils_start_thread(&env.stdio_thread, wait_for_stdio_interrupt, NULL, NULL, 1);
+    }
+
     struct rumprun_boot_config rumprun_config = {(char *)custom_get_cmdline(&env.custom_simple), CONFIG_RUMPRUN_TMPFS_NUM_MiB};
 
     bmk_sched_startmain(bmk_mainthread, (void *) &rumprun_config);

@@ -43,6 +43,7 @@ struct env {
     vka_object_t pci_notification;
     vka_object_t spl_notification;
     sel4utils_thread_t pci_thread;
+    sel4utils_thread_t stdio_thread;
 
     sync_bin_sem_t spl_semaphore;
     /* IO Ops */

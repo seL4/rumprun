@@ -123,13 +123,16 @@ int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace
 
     }
     init_data_t *init_data = custom_simple->simple->data;
-    void *existing_frames[init_data->stack_pages + 4];
+    void *existing_frames[init_data->stack_pages + RR_NUMIO + 4];
     existing_frames[0] = (void *) init_data;
     existing_frames[1] = ((char *) init_data) + PAGE_SIZE_4K;
     existing_frames[2] = seL4_GetIPCBuffer();
     ZF_LOGF_IF(init_data->stack_pages == 0, "No stack");
+    for (int i = 0; i < RR_NUMIO; i++) {
+        existing_frames[i+3] = init_data->stdio[i];
+    }
 
-    int frames_index = 3;
+    int frames_index = 3 + RR_NUMIO;
     for (int i = 0; i < init_data->stack_pages; i++, frames_index++) {
         existing_frames[frames_index] = init_data->stack + (i * PAGE_SIZE_4K);
     }
@@ -230,6 +233,11 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     custom_simple->serial_config.serial = SERIAL_SERVER;
     custom_simple->rpc_ep = init_data->rpc_ep;
     custom_simple->serial_config.ep = init_data->serial_ep;
+    for (int i = 0; i < 3; i++) {
+        custom_simple->stdio_buf[i] = init_data->stdio[i];
+        custom_simple->stdio_ep[i] = init_data->stdio_eps[i];
+    }
+    custom_simple->get_char_handler = NULL;
     simple->data = init_data;
     simple->cap_count = &simple_default_cap_count;
     simple->init_cap = &simple_default_init_cap;

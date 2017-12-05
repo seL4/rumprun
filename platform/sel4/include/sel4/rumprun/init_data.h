@@ -30,6 +30,13 @@
 #define TIMER_LABEL 0x00000F00
 #define MAX_REGIONS 4
 
+/* These are also defined in librumpsel4_studio/sel4_stdio.h */
+#define RR_STDIN 0
+#define RR_STDOUT 1
+#define RR_STDERR 2
+#define RR_NUMIO 3
+#define RR_STDIO_PAGE_BITS PAGE_BITS_4K
+
 typedef struct {
     uint8_t size_bits;
     /* ALLOCMAN_UT_KERNEL, ALLOCMAN_UT_DEV, ALLOCMAN_UT_DEV_MEM */
@@ -73,7 +80,8 @@ typedef struct {
     seL4_SlotRegion untypeds;
     untyped_descriptor_t untyped_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS];
     interrupt_descriptor_t interrupt_list[MAX_NUM_PCI_DEVICES];
-
+    void *stdio[3];
+    seL4_CPtr stdio_eps[3];
     /* Rump cmdline */
     char cmdline[RUMP_CONFIG_MAX];
 
