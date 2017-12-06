@@ -359,12 +359,12 @@ buildtools ()
 	    -V RUMP_KERNEL_IS_LIBC=1 -V BUILDRUMP_SYSROOT=yes		\
 	    ${extracflags} "$@" tools
 
-	echo '>>'
-	echo '>> Now that we have the appropriate tools, performing'
-	echo '>> further setup for rumprun build'
-	echo '>>'
+	${DObuild} && echo '>>'
+	${DObuild} && echo '>> Now that we have the appropriate tools, performing'
+	${DObuild} && echo '>> further setup for rumprun build'
+	${DObuild} && echo '>>'
 
-
+	return 0
 }
 
 buildconfigfiles()
@@ -400,6 +400,10 @@ EOF
 
 	echo "RUMPRUN_TUPLE=${TOOLTUPLE}" >> ${RUMPTOOLS}/mk.conf
 
+	${DObuild} && echo '>>'
+	${DObuild} && echo '>> Built config files needed to build rumpkernel'
+	${DObuild} && echo '>>'
+	return 0
 }
 
 buildrumpkernel()
@@ -409,11 +413,13 @@ buildrumpkernel()
 	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
 	    "$@" build kernelheaders install
 
-	echo '>>'
-	echo '>> Rump kernel components built.  Proceeding to build'
-	echo '>> rumprun bits'
-	echo '>>'
+	${DObuild} && echo '>>'
+	${DObuild} && echo '>> Rump kernel components built.  Proceeding to build'
+	${DObuild} && echo '>> rumprun bits'
+	${DObuild} && echo '>>'
+	return 0
 }
+
 
 buildapptools ()
 {
@@ -604,24 +610,24 @@ dobuild "$@"
 ${DOinstall} && doinstall
 
 # echo some useful information for the user
-echo
-echo '>>'
-echo ">> Finished $0 for ${PLATFORM}"
-echo '>>'
-echo ">> For Rumprun developers (if you're not sure, you don't need it):"
-echo ". \"${RROBJ}/config\""
-echo '>>'
+${DObuild} && echo
+${DObuild} && echo '>>'
+${DObuild} && echo ">> Finished $0 for ${PLATFORM}"
+${DObuild} && echo '>>'
+${DObuild} && echo ">> For Rumprun developers (if you're not sure, you don't need it):"
+${DObuild} && echo ". \"${RROBJ}/config\""
+${DObuild} && echo '>>'
 if ${DObuild}; then
 	printf ">> toolchain tuple: ${TOOLTUPLE}\n"
 	printf ">> cc wrapper: %s-%s\n" \
 	   ${TOOLTUPLE} "$(${RUMPMAKE} -f bsd.own.mk -V '${ACTIVE_CC}')"
 fi
 if ${DOinstall}; then
-	printf ">> installed to \"%s\"\n" ${RRDEST}
-	echo '>>'
-	echo '>> Set tooldir to front of $PATH (bourne-style shells)'
-	echo ". \"${RROBJ}/config-PATH.sh\""
+	${DObuild} && printf ">> installed to \"%s\"\n" ${RRDEST}
+	${DObuild} && echo '>>'
+	${DObuild} && echo '>> Set tooldir to front of $PATH (bourne-style shells)'
+	${DObuild} && echo ". \"${RROBJ}/config-PATH.sh\""
 fi
-echo '>>'
-echo ">> $0 ran successfully"
+${DObuild} && echo '>>'
+${DObuild} && echo ">> $0 ran successfully"
 exit 0
