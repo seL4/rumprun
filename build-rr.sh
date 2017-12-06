@@ -336,7 +336,6 @@ buildtools ()
 {
 
 	checktools
-	checkprevbuilds
 
 	extracflags=
 	[ "${MACHINE_GNU_ARCH}" = "x86_64" ] \
@@ -503,6 +502,8 @@ dobuild ()
 
 	PLATFORM_MKCONF=
 	. ${PLATFORMDIR}/platform.conf
+
+	checkprevbuilds
 
 	buildtools "$@"
 	buildconfigfiles
