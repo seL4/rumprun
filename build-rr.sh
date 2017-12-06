@@ -332,7 +332,7 @@ checktools ()
 	fi
 }
 
-buildrump ()
+buildtools ()
 {
 
 	checktools
@@ -361,6 +361,11 @@ buildrump ()
 
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
+
+}
+
+buildconfigfiles()
+{
 
 	makeconfig ${RROBJ}/config.mk ''
 	makeconfig ${RROBJ}/config.sh \"
@@ -393,6 +398,10 @@ EOF
 
 	echo "RUMPRUN_TUPLE=${TOOLTUPLE}" >> ${RUMPTOOLS}/mk.conf
 
+}
+
+buildrumpkernel()
+{
 	# build rump kernel
 	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
 	    -s ${RUMPSRC} -T ${RUMPTOOLS} -o ${BROBJ} -d ${STAGING}	\
@@ -495,7 +504,10 @@ dobuild ()
 	PLATFORM_MKCONF=
 	. ${PLATFORMDIR}/platform.conf
 
-	buildrump "$@"
+	buildtools "$@"
+	buildconfigfiles
+	buildrumpkernel "$@"
+
 	mkdir -p ${STAGING}/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}\
 	    || die cannot create libdir
 
