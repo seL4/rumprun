@@ -46,12 +46,17 @@ OBJS:=	$(patsubst %.c,${RROBJ}/platform/%.o,${SRCS}) \
 
 SEL4_INSTALL_HEADERS := include/sel4/rumprun
 
-.PHONY:	clean cleandir all
+.PHONY:	clean cleandir all platform_obj platform_libs extra_libs
 
-all: links ${MAINOBJ} ${TARGETS} extralibs
+all: links platform_obj platform_libs extra_libs
+
+platform_obj: ${MAINOBJ}
+
+platform_libs: ${TARGETS}
+
 $(eval $(call BUILDLIB_target,librumpsel4_stdio,.))
 
-extralibs: ${RROBJLIB}/librumpsel4_stdio/librumpsel4_stdio.a
+extra_libs: ${RROBJLIB}/librumpsel4_stdio/librumpsel4_stdio.a
 
 
 # These are required to provide hardware info to rumprun/libs/*
