@@ -102,6 +102,17 @@ parseargs ()
 
 	DObuild=false
 	DOinstall=false
+	DOtools=false
+	DOtoolsconfig=false
+	DOrumplibs=false
+	DOplatformobj=false
+	DOextralibs=false
+	DOplatformlibs=false
+	DOplatforminstall=false
+	DOplatformheaders=false
+	DOuserspace=false
+	DOapptools=false
+	DOpci=false
 
 	orignargs=$#
 	while getopts '?d:hj:ko:qs:' opt; do
@@ -166,7 +177,7 @@ parseargs ()
 			break
 		else
 			case $1 in
-			build|install)
+			build|tools|toolsconfig|rumplibs|platformobj|platformlibs|extralibs|platforminstall|platformheaders|pci|userspace|apptools|install)
 				eval DO${1}=true
 				;;
 			*)
@@ -497,7 +508,7 @@ dobuild ()
 
 	checkprevbuilds
 
-	buildtools "$@"
+	(${DObuild} || ${DOtools}) && buildtools "$@"
 
 	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
 
@@ -507,27 +518,36 @@ dobuild ()
 	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
 	    || HAVECXX=true
 
-	buildconfigfiles
+	(${DObuild} || ${DOtoolsconfig}) && buildconfigfiles
 
 	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
 
 
-	buildrumpkernel "$@"
+	(${DObuild} || ${DOrumplibs}) && buildrumpkernel "$@"
+
 
 	mkdir -p ${STAGING}/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}\
 	    || die cannot create libdir
 
-	${KERNONLY} || buildapptools
-	${MAKE} $MAKE_SILENT -C ${PLATFORMDIR} links
-	${KERNONLY} || builduserspace
+	(${DObuild} || ${DOapptools}) && (${KERNONLY} || buildapptools)
+	(${DObuild} || ${DOplatformheaders}) && ${MAKE} $MAKE_SILENT -C ${PLATFORMDIR} links
+	(${DObuild} || ${DOuserspace}) && (${KERNONLY} || builduserspace)
 
-	buildpci
+	(${DObuild} || ${DOpci}) && buildpci
 
 	# do final build of the platform bits
-	( cd ${PLATFORMDIR} \
-	    && ${MAKE} $MAKE_SILENT BUILDRR=true \
-	    && ${MAKE} $MAKE_SILENT BUILDRR=true install || exit 1)
-	[ $? -eq 0 ] || die platform make failed!
+	# If building in one go, just invoke make then make install
+	${DObuild} &&  ( ( cd ${PLATFORMDIR} \
+           && ${MAKE} $MAKE_SILENT BUILDRR=true \
+           && ${MAKE} $MAKE_SILENT BUILDRR=true install || exit 1)
+       [ $? -eq 0 ] || die platform make failed!)
+    # If building separately, invoke make with different targets.
+	${DOplatformobj} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_obj)
+	${DOplatformlibs} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_libs)
+	${DOextralibs} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true extra_libs)
+	${DOplatforminstall} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true install)
+
+	return 0
 }
 
 doinstall ()
@@ -579,7 +599,8 @@ parseargs "$@"
 shift ${ARGSSHIFT}
 
 setvars "$@"
-${DObuild} && dobuild "$@"
+dobuild "$@"
+
 ${DOinstall} && doinstall
 
 # echo some useful information for the user
