@@ -353,13 +353,6 @@ buildtools ()
 	echo '>> further setup for rumprun build'
 	echo '>>'
 
-	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
-
-	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
-	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
-
-	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
-	    || HAVECXX=true
 
 }
 
@@ -381,7 +374,6 @@ EOF
 	cat > "${RROBJ}/config-PATH.sh" << EOF
 export PATH="${RRDEST}/bin:\${PATH}"
 EOF
-	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
 
 	probeprereqs
 
@@ -506,7 +498,20 @@ dobuild ()
 	checkprevbuilds
 
 	buildtools "$@"
+
+	RUMPMAKE=$(pwd)/${RUMPTOOLS}/rumpmake
+
+	TOOLTUPLE=$(${RUMPMAKE} -f bsd.own.mk \
+	    -V '${MACHINE_GNU_PLATFORM:S/--netbsd/-rumprun-netbsd/}')
+
+	[ $(${RUMPMAKE} -f bsd.own.mk -V '${_BUILDRUMP_CXX}') != 'yes' ] \
+	    || HAVECXX=true
+
 	buildconfigfiles
+
+	export RUMPRUN_MKCONF="${RROBJ}/config.mk"
+
+
 	buildrumpkernel "$@"
 
 	mkdir -p ${STAGING}/rumprun-${MACHINE_GNU_ARCH}/lib/rumprun-${PLATFORM}\
