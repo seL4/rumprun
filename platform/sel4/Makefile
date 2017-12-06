@@ -48,7 +48,7 @@ SEL4_INSTALL_HEADERS := include/sel4/rumprun
 
 .PHONY:	clean cleandir all
 
-all: links archdirs ${MAINOBJ} ${TARGETS} extralibs
+all: links ${MAINOBJ} ${TARGETS} extralibs
 $(eval $(call BUILDLIB_target,librumpsel4_stdio,.))
 
 extralibs: ${RROBJLIB}/librumpsel4_stdio/librumpsel4_stdio.a
@@ -64,7 +64,7 @@ ${RROBJ}/include/bmk-pcpu:
 
 links: ${RROBJ}/include/sel4/machine ${RROBJ}/include/bmk-pcpu
 
-${RROBJ}/platform/%.o: %.c
+${RROBJ}/platform/%.o: %.c ${RROBJ}/platform/archdirs.stamp
 	$(Q)$(call make-depend,$<,$@,$(patsubst %.o,%.d,$@))
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $< -o $@
 

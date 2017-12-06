@@ -15,7 +15,7 @@ SRCS+=	arch/x86/clock.c arch/x86/arch.c
 
 CFLAGS+=	-mno-sse -mno-mmx -march=i686
 
-.PHONY: archdirs
-archdirs:
-	mkdir -p ${RROBJ}/platform/arch/i386
-	mkdir -p ${RROBJ}/platform/arch/x86
+${RROBJ}/platform/archdirs.stamp:
+	$(Q)mkdir -p ${RROBJ}/platform/arch/i386
+	$(Q)mkdir -p ${RROBJ}/platform/arch/x86
+	$(Q)touch $@
