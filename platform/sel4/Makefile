@@ -89,8 +89,8 @@ ${INTERMEDIATE_BASEFILE}: ${OBJS} platformlibs
 
 SEL4_LIBDIR = $(PROJECT_BASE)/stage/x86/pc99/lib
 MAINOBJ_LD_FLAGS := $(SEL4_LIBDIR:%=-L%) $(RUMPRUN_SEL4LIBS:%=-l%) $(BASEFILE_LD_FLAGS)
-CRTOBJFILES ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
-FINOBJFILES ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
+CRTOBJFILES_SEL4 ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
+FINOBJFILES_SEL4 ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
 
 # Look away now
 ${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o
@@ -98,7 +98,7 @@ ${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o
 	# Generate the rumprun.o object file that is linked against apps that want to use rumprun.
 	# --whole-archive is used to ensure constructor symbols are included from some libraries
 	# --start-group because seL4 libraries have circular dependencies
-	${CC} -nostdlib ${CFLAGS} ${CRTOBJFILES} ${RROBJ}/platform/main.o ${INTERMEDIATE_BASEFILE} ${FINOBJFILES} -o $@ ${MAINOBJ_LD_FLAGS}
+	${CC} -nostdlib ${CFLAGS} ${CRTOBJFILES_SEL4} ${RROBJ}/platform/main.o ${INTERMEDIATE_BASEFILE} ${FINOBJFILES_SEL4} -o $@ ${MAINOBJ_LD_FLAGS}
 	# Objcopy is used to promote all -G symbols to global symbols while hiding all other symbols.
 	${BASEFILE_OBJCOPY} $@
 
