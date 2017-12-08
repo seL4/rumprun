@@ -92,6 +92,7 @@ MAINOBJ_LD_FLAGS := $(SEL4_LIBDIR:%=-L%) $(RUMPRUN_SEL4LIBS:%=-l%) $(BASEFILE_LD
 CRTOBJFILES_SEL4 ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
 FINOBJFILES_SEL4 ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
 
+.PHONY: ${MAINOBJ}
 # Look away now
 ${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o platformlibs
 	echo "  [Building final basefile]"
