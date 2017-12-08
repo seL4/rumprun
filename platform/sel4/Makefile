@@ -84,7 +84,7 @@ endif
 
 
 ${INTERMEDIATE_BASEFILE}: ${OBJS} platformlibs
-	echo "Building: $(INTERMEDIATE_BASEFILE)"
+	echo "  [Building intermediate basefile]"
 	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
 
 SEL4_LIBDIR = $(PROJECT_BASE)/stage/x86/pc99/lib
@@ -94,7 +94,7 @@ FINOBJFILES ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(
 
 # Look away now
 ${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o
-	echo "Building: $(MAINOBJ): $(CFLAGS)"
+	echo "  [Building final basefile]"
 	# Generate the rumprun.o object file that is linked against apps that want to use rumprun.
 	# --whole-archive is used to ensure constructor symbols are included from some libraries
 	# --start-group because seL4 libraries have circular dependencies
