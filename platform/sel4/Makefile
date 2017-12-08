@@ -44,8 +44,6 @@ CFLAGS+= -I$(PROJECT_BASE)/stage/x86/pc99/include
 OBJS:=	$(patsubst %.c,${RROBJ}/platform/%.o,${SRCS}) \
 	$(patsubst %.S,${RROBJ}/platform/%.o,${ASMS})
 
-SEL4_INSTALL_HEADERS := include/sel4/rumprun
-
 .PHONY:	clean cleandir all platform_obj platform_libs extra_libs
 
 all: links platform_obj platform_libs extra_libs
