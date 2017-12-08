@@ -83,7 +83,7 @@ $(error $(BASEFILE) does not equal $(MAINOBJ). ${PWD})
 endif
 
 
-${INTERMEDIATE_BASEFILE}: ${OBJS} platformlibs
+${INTERMEDIATE_BASEFILE}: ${OBJS}
 	echo "  [Building intermediate basefile]"
 	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
 
@@ -93,7 +93,7 @@ CRTOBJFILES_SEL4 ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(
 FINOBJFILES_SEL4 ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
 
 # Look away now
-${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o
+${MAINOBJ}: ${INTERMEDIATE_BASEFILE} ${RROBJ}/platform/main.o platformlibs
 	echo "  [Building final basefile]"
 	# Generate the rumprun.o object file that is linked against apps that want to use rumprun.
 	# --whole-archive is used to ensure constructor symbols are included from some libraries
