@@ -89,6 +89,15 @@ $(RUMPRUN_BUILD_DIR)/install_headers: $(shell find -L $(SEL4_INSTALL_HEADERS) \(
 	$(Q)touch $@
 
 
+.PHONY:FORCE_RUN
+FORCE_RUN:
+	@true
+
+$(RUMPRUN_BUILD_DIR)/configure_line: FORCE_RUN
+	$(Q)mkdir -p $(RUMPRUN_BUILD_DIR)
+	$(Q)([ -e $@ ] && [ "`cat $@ 2>&1`" == '${BUILD_RR_CMD_LINE}' ]) || \
+	echo '${BUILD_RR_CMD_LINE}' > $@
+
 # Only set FULLDIRPATH if the COOKFS dir is set to something proper
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),"")
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),)
@@ -109,7 +118,7 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
        $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(PROJECT_BASE)/.config \
 	   $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
 	   $(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES) \
-	   $(RUMPRUN_BUILD_DIR)/install_headers
+	   $(RUMPRUN_BUILD_DIR)/install_headers $(RUMPRUN_BUILD_DIR)/configure_line
 	@echo "[Building rumprun]"
 	${BUILD_RR_CMD_LINE}
 	@echo " [rumprun] rebuilt rumprun sel4"
