@@ -81,6 +81,14 @@ RUMPRUN_INCLUDE_FILES:= $(shell find -L $(CURRENT_DIR)/include/ \( -type f \))
 APP_TOOLS_FILES:= $(shell find -L $(CURRENT_DIR)/app-tools/ \( -type f \))
 RUMPRUN_FILES:= $(SEL4_PLATFORM_FILES) $(RUMPRUN_LIB_FILES) $(RUMPRUN_INCLUDE_FILES)
 
+$(RUMPRUN_BUILD_DIR)/install_headers: $(shell find -L $(SEL4_INSTALL_HEADERS) \( -type f \))
+	@echo "[Installing] headers"
+	@mkdir -p $(STAGE_BASE)/include/
+	$(Q)cp -ra $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
+	$(Q)mkdir -p $(RUMPRUN_BUILD_DIR)
+	$(Q)touch $@
+
+
 # Only set FULLDIRPATH if the COOKFS dir is set to something proper
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),"")
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),)
@@ -100,9 +108,8 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
        ${CURRENT_DIR}/.rumpstamp \
        $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(PROJECT_BASE)/.config \
 	   $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
-	$(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES)
-	@echo "[Installing] headers"
-	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
+	   $(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES) \
+	   $(RUMPRUN_BUILD_DIR)/install_headers
 	@echo "[Building rumprun]"
 	${BUILD_RR_CMD_LINE}
 	@echo " [rumprun] rebuilt rumprun sel4"
