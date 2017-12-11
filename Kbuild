@@ -12,6 +12,7 @@ PROJECT_BASE := $(PWD)
 ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
 
 include ${CURRENT_DIR}/platform/sel4/rumprunlibs.mk
+RUMPRUN_BUILD_DIR := $(BUILD_BASE)/rumprun
 
 ifeq ($(CONFIG_RUMPRUN), y)
 
@@ -87,8 +88,8 @@ ccache_wrapper_contents = \
 \#!/bin/sh \n\
 exec $(CCACHE) $1 \"\$$@\"\n
 
-$(BUILD_BASE)/rumprun/%-wrapper:
-	mkdir -p $(BUILD_BASE)/rumprun
+$(RUMPRUN_BUILD_DIR)/%-wrapper:
+	mkdir -p $(RUMPRUN_BUILD_DIR)
 	echo -e "$(call ccache_wrapper_contents, $*)" | sed -e 's/^[ ]//' >$(@)
 	chmod +x $@
 
@@ -102,7 +103,7 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
        libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
        ${CURRENT_DIR}/.rumpstamp \
        $(STAGE_BASE)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config \
-	$(BUILD_BASE)/rumprun/$(CROSS_COMPILE)gcc-wrapper $(BUILD_BASE)/rumprun/$(CROSS_COMPILE)g++-wrapper
+	$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
 	@echo "[Building rumprun]"
@@ -110,8 +111,8 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
 	PATH=${PATH} \
 	SEL4_ARCH=$(SEL4_ARCH) \
 	PROJECT_BASE=$(PWD) \
-	CC=$(BUILD_BASE)/$@/$(CROSS_COMPILE)gcc-wrapper \
-	CXX=$(BUILD_BASE)/$@/$(CROSS_COMPILE)g++-wrapper \
+	CC=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper \
+	CXX=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
 	CFLAGS_SEL4=$(CFLAGS_SEL4) LDFLAGS_SEL4="$(LDFLAGS_SEL4)" \
 	CRTOBJFILES_SEL4="$(CRTOBJFILES_SEL4)" FINOBJFILES_SEL4="$(FINOBJFILES_SEL4)" \
 	./build-rr.sh $(QUIET) \
