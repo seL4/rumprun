@@ -14,10 +14,10 @@ INSTALLTGTS+=	librumpkern_mman_install
 
 ifneq (${KERNONLY},true)
 TARGETS+=	userlibs
-INSTALLTGTS+=	librumprun_base_install librumprun_tester_install2
+USRINSTALLTGTS+=	librumprun_base_install librumprun_tester_install2
 INSTALLTGTS+=	librumprunfs_base_install_custom
 ifeq (${CONFIG_CXX},yes)
-INSTALLTGTS+=	libunwind_install2
+USRINSTALLTGTS+=	libunwind_install2
 endif
 endif
 
@@ -83,14 +83,22 @@ endif
 
 PSEUDOSTUBS:= ${RROBJ}/pseudolinkstubs
 
+${RROBJLIB}/librumprun_base/librumprun_base.a: links
+
 ${PSEUDOSTUBS}.c: ${RROBJLIB}/librumprun_base/librumprun_base.a
 	sh ../makepseudolinkstubs.sh ${NM} ${RUMPSRC} $< $@
 
 ${RROBJ}/bmk.ldscript: ${LDSCRIPT}
 	ln -sf $< $@
 
+${PSEUDOSTUBS}.o: ${PSEUDOSTUBS}.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $^
+
+platform_toplevel: userlibs_no_librumprunfs_base
+
 commonlibs: platformlibs userlibs
-userlibs: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a ${LIBUNWIND} ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a
+userlibs_no_librumprunfs_base: ${PSEUDOSTUBS}.o ${RROBJLIB}/librumprun_base/librumprun_base.a ${RROBJLIB}/librumprun_tester/librumprun_tester.a ${LIBUNWIND}
+userlibs: userlibs_no_librumprunfs_base ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a
 platformlibs: ${RROBJLIB}/libbmk_core/libbmk_core.a ${RROBJLIB}/libbmk_rumpuser/libbmk_rumpuser.a ${RROBJ}/bmk.ldscript
 rumpkernlibs: ${RROBJLIB}/librumpkern_bmktc/librumpkern_bmktc.a ${RROBJLIB}/librumpkern_mman/librumpkern_mman.a
 compiler_rt: ${RROBJLIB}/libcompiler_rt/libcompiler_rt.a
@@ -128,9 +136,13 @@ installuser:
 	install -m 0444 ${PSEUDOSTUBS}.o ${INSTALLDIR_LIBARCH}
 
 INSTALLTGTS+=	installkern
+platform_bottomlevel_install: ${INSTALLTGTS}
+
 ifneq (${KERNONLY},true)
-INSTALLTGTS+=	installuser
+USRINSTALLTGTS+=	installuser
+INSTALLTGTS+=	${USRINSTALLTGTS}
 endif
+platform_toplevel_install: ${USRINSTALLTGTS}
 
 .PHONY: install
 install: ${INSTALLTGTS}

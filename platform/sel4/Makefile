@@ -47,11 +47,11 @@ OBJS:=	$(patsubst %.c,${RROBJ}/platform/%.o,${SRCS}) \
 
 .PHONY:	clean cleandir all platform_obj platform_libs extra_libs
 
-all: links platform_obj platform_libs extra_libs
+all: links userlibs_no_librumprunfs_base platform_obj platform_libs extra_libs
 
 platform_obj: ${MAINOBJ}
 
-platform_libs: ${TARGETS}
+platform_libs: ${RROBJLIB}/librumprunfs_base/librumprunfs_base.a rumpkernlibs compiler_rt
 
 $(eval $(call BUILDLIB_target,librumpsel4_stdio,.))
 

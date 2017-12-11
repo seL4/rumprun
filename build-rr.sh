@@ -110,6 +110,7 @@ parseargs ()
 	DOplatformlibs=false
 	DOplatforminstall=false
 	DOplatformheaders=false
+	DOplatformtoplevel=false
 	DOuserspace=false
 	DOapptools=false
 	DOpci=false
@@ -177,7 +178,7 @@ parseargs ()
 			break
 		else
 			case $1 in
-			build|tools|toolsconfig|rumplibs|platformobj|platformlibs|extralibs|platforminstall|platformheaders|pci|userspace|apptools|install)
+			build|tools|toolsconfig|rumplibs|platformobj|platformlibs|extralibs|platformtoplevel|platforminstall|platformheaders|pci|userspace|apptools|install)
 				eval DO${1}=true
 				;;
 			*)
@@ -550,8 +551,9 @@ dobuild ()
     # If building separately, invoke make with different targets.
 	${DOplatformobj} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_obj)
 	${DOplatformlibs} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_libs)
+	${DOplatformtoplevel} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_toplevel && ${MAKE} $MAKE_SILENT BUILDRR=true platform_toplevel_install)
 	${DOextralibs} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true extra_libs)
-	${DOplatforminstall} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true install)
+	${DOplatforminstall} && ( cd ${PLATFORMDIR} && ${MAKE} $MAKE_SILENT BUILDRR=true platform_bottomlevel_install)
 
 	return 0
 }
