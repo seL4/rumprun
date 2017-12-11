@@ -112,5 +112,5 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
 
 
 # Rename muslc's archive from libc.a to libmuslc.a (Don't ask)
-$(STAGE_BASE)/lib/libmuslc.a:
+$(STAGE_BASE)/lib/libmuslc.a: $(libc)
 	cp $(STAGE_BASE)/lib/libc.a $(STAGE_BASE)/lib/libmuslc.a
