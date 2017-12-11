@@ -25,24 +25,6 @@ clean_rump:
 	$Qrm -rf $(SEL4_RRDEST)
 	$Qrm -rf ${CURRENT_DIR}/.rumpstamp
 
-# These following rules are for loading a directory into a rumprun image
-# via the librumprunfs library.  Setting CONFIG_RUMPRUN_COOKFS_DIR to a
-# valid path from the root of the project will result in that folder appearing
-# at the top of the rumprun root file system /(folder name)
-
-cookfs_dirpath := $(CONFIG_RUMPRUN_COOKFS_DIR)
-ifeq ($(cookfs_dirpath),)
-cookfs_dirpath = ""
-endif
-ifneq ($(cookfs_dirpath),"")
-FULLDIRPATH := $(PWD)/$(cookfs_dirpath)
-else
-endif
-cookfs-dir := $(shell mkdir -p $(SEL4_RROBJ)/rootfs/ && rsync -av $(FULLDIRPATH) \
-	$(CURRENT_DIR)/lib/librumprunfs_base/rootfs/ $(SEL4_RROBJ)/rootfs/ --delete | wc -l)
-ifneq ($(cookfs-dir), 4)
-	export RUMPSTALE = 1
-endif
 endif
 
 
@@ -56,11 +38,6 @@ SRC_DIRECTORIES := app-tools buildrump.sh include lib platform src-netbsd
 # Find all source rump files.
 RUMPFILES += $(shell find -L $(SRC_DIRECTORIES:%=$(CURRENT_DIR)/%) \( -type f \))
 RUMPFILES += $(shell find $(CURRENT_DIR) -maxdepth 1 -type f)
-
-# Force rebuild if RUMPSTALE is set (For when the COOKFS directory is updated)
-ifeq ($(RUMPSTALE), 1)
-COOKFS_REBUILD := stale
-endif
 
 ifeq ($(SEL4_ARCH), ia32)
 RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
@@ -98,11 +75,24 @@ CRTOBJFILES_SEL4 := $(STAGE_BASE)/lib/crt1.o $(STAGE_BASE)/lib/crti.o $(shell $(
 FINOBJFILES_SEL4 := $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(STAGE_BASE)/lib/crtn.o
 CFLAGS_SEL4:=-I$(PROJECT_BASE)/stage/x86/pc99/include
 
+# Only set FULLDIRPATH if the COOKFS dir is set to something proper
+ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),"")
+ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),)
+FULLDIRPATH := $(PWD)/$(CONFIG_RUMPRUN_COOKFS_DIR)
+endif
+endif
+
+.PHONY: rumprun-setup-librumprunfs
+rumprun-setup-librumprunfs:
+	$(Q)mkdir -p $(SEL4_RROBJ)/rootfs/ && rsync -av $(FULLDIRPATH) \
+	$(CURRENT_DIR)/lib/librumprunfs_base/rootfs/ $(SEL4_RROBJ)/rootfs/ --delete
+
+
 rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
        libplatsupport libsel4platsupport libsel4vspace \
        libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
        ${CURRENT_DIR}/.rumpstamp \
-       $(STAGE_BASE)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config \
+       $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(RUMPFILES) $(PROJECT_BASE)/.config \
 	$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
@@ -121,12 +111,6 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
 	sel4 -- $(RUMPKERNEL_FLAGS)
 	@echo " [rumprun] rebuilt rumprun sel4"
 
-
-
-
-.PHONY: stale
-stale:
-	@echo " [rumprun] cookfs directory was updated"
 
 # Rename muslc's archive from libc.a to libmuslc.a (Don't ask)
 $(STAGE_BASE)/lib/libmuslc.a:
