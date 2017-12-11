@@ -95,7 +95,7 @@ endif
 endif
 
 .PHONY: rumprun-setup-librumprunfs
-rumprun-setup-librumprunfs:
+rumprun-setup-librumprunfs: $(RUMPRUN_USERLEVEL_APPS)
 	$(Q)mkdir -p $(SEL4_RROBJ)/rootfs/ && rsync -av $(FULLDIRPATH) \
 	$(CURRENT_DIR)/lib/librumprunfs_base/rootfs/ $(SEL4_RROBJ)/rootfs/ --delete
 
