@@ -47,24 +47,12 @@ ifeq ($(V),)
 QUIET:=-q -q
 endif
 
-# This wraps the call to ccache in a shell script because the rumprun build doesn't
-# expand the variable correctly if we try CC=ccache gcc.
-# See here for more info: https://wiki.netbsd.org/tutorials/using_ccache_with_build_sh/
-ccache_wrapper_contents = \
-\#!/bin/sh \n\
-exec $(CCACHE) $1 \"\$$@\"\n
-
-$(RUMPRUN_BUILD_DIR)/%-wrapper:
-	mkdir -p $(RUMPRUN_BUILD_DIR)
-	echo -e "$(call ccache_wrapper_contents, $*)" | sed -e 's/^[ ]//' >$(@)
-	chmod +x $@
-
 LDFLAGS_SEL4:= -L$(STAGE_BASE)/lib $(RUMPRUN_SEL4LIBS:%=-l%)
 CRTOBJFILES_SEL4 := $(STAGE_BASE)/lib/crt1.o $(STAGE_BASE)/lib/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
 FINOBJFILES_SEL4 := $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(STAGE_BASE)/lib/crtn.o
 CFLAGS_SEL4:=-I$(PROJECT_BASE)/stage/x86/pc99/include
-RR_ENV_VARS := PATH=${PATH} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper \
-	CXX=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper CFLAGS_SEL4=$(CFLAGS_SEL4) \
+RR_ENV_VARS := PATH=${PATH} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(CROSS_COMPILE)gcc \
+	CXX=$(CROSS_COMPILE)g++ CFLAGS_SEL4=$(CFLAGS_SEL4) \
 	LDFLAGS_SEL4="$(LDFLAGS_SEL4)" 	CRTOBJFILES_SEL4="$(CRTOBJFILES_SEL4)" 	FINOBJFILES_SEL4="$(FINOBJFILES_SEL4)"
 
 
@@ -116,7 +104,6 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
        libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
        ${CURRENT_DIR}/.rumpstamp \
        $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(PROJECT_BASE)/.config \
-	   $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
 	   $(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES) \
 	   $(RUMPRUN_BUILD_DIR)/install_headers $(RUMPRUN_BUILD_DIR)/configure_line
 	@echo "[Building rumprun]"
