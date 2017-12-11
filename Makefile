@@ -25,17 +25,8 @@ ifeq ($(RUMPSTALE), 1)
 COOKFS_REBUILD := stale
 endif
 
-supported= false
-
 ifeq ($(SEL4_ARCH), ia32)
-supported:=true
 RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
-endif
-ifeq ($(SEL4_ARCH), x86_64)
-supported:=true
-endif
-ifneq (${supported},true)
-$(error only supported target is x86, ${SEL4_ARCH} is not supported)
 endif
 
 #Build for release and 32 bit.
