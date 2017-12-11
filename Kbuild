@@ -10,8 +10,6 @@
 CURRENT_DIR := $(dir $(abspath $(lastword ${MAKEFILE_LIST})))
 PROJECT_BASE := $(PWD)
 ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
-# Save the path
-PATH2 := ${PATH}
 
 include ${CURRENT_DIR}/platform/sel4/rumprunlibs.mk
 
@@ -109,7 +107,7 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
 	@echo "[Building rumprun]"
 	cd $(CURRENT_DIR) && env -i \
-	PATH=${PATH2} \
+	PATH=${PATH} \
 	SEL4_ARCH=$(SEL4_ARCH) \
 	PROJECT_BASE=$(PWD) \
 	CC=$(BUILD_BASE)/$@/$(CROSS_COMPILE)gcc-wrapper \
