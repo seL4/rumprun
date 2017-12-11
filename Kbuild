@@ -59,7 +59,8 @@ RR_ENV_VARS := PATH=${PATH} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(CROS
 BUILD_RR_CMD_LINE = cd $(CURRENT_DIR) && env -i $(RR_ENV_VARS) ./build-rr.sh $(QUIET) \
 	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(CURRENT_DIR))) \
 	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(CURRENT_DIR))) \
-	sel4 -- $(RUMPKERNEL_FLAGS)
+	sel4 ${1} -- $(RUMPKERNEL_FLAGS)
+
 
 BUILD_RR_FILES:= $(shell find -L $(CURRENT_DIR)/buildrump.sh/ \( -type f \))
 SRC_NETBSD_FILES:= $(shell find -L $(CURRENT_DIR)/src-netbsd/ \( -type f \))
@@ -99,16 +100,56 @@ rumprun-setup-librumprunfs:
 	$(CURRENT_DIR)/lib/librumprunfs_base/rootfs/ $(SEL4_RROBJ)/rootfs/ --delete
 
 
-rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
+define RUMPRUN_BUILD_MACRO
+
+$1_RUMP_BUILD_ORDER_DEPS:= $3
+$(RUMPRUN_BUILD_DIR)/$1: $$($1_RUMP_BUILD_ORDER_DEPS:%=$(RUMPRUN_BUILD_DIR)/%) $4
+	@echo " [Calling ./build-rr.sh - $2]"
+	$(Q)$$(call BUILD_RR_CMD_LINE, $1)
+	$(Q)touch $$@
+
+$1_TARGET= $(RUMPRUN_BUILD_DIR)/$1
+
+endef
+
+$(eval $(call RUMPRUN_BUILD_MACRO,tools,Rump kernel tools,\
+	configure_line, $(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(CURRENT_DIR)/.rumpstamp))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,toolsconfig,Extra Rumprun tools configuration,tools))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,rumplibs,Rump kernel modules,toolsconfig))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,apptools,Rumprun app toolchains,rumplibs,$(APP_TOOLS_FILES)))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,userspace,Rumprun userspace libraries,rumplibs))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,platformheaders,Platform headers,toolsconfig install_headers,$(RUMPRUN_FILES)))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,platformlibs,Rumprun platform libraries,platformheaders rumplibs,\
+	rumprun-setup-librumprunfs $(RUMPRUN_LIB_FILES) $(RUMPRUN_INCLUDE_FILES)))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,platformobj,Platform object files,userspace platformheaders rumplibs,\
+	$(RUMPRUN_FILES)  $(STAGE_BASE)/lib/libmuslc.a $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
        libplatsupport libsel4platsupport libsel4vspace \
-       libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
-       ${CURRENT_DIR}/.rumpstamp \
-       $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(PROJECT_BASE)/.config \
-	   $(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES) \
-	   $(RUMPRUN_BUILD_DIR)/install_headers $(RUMPRUN_BUILD_DIR)/configure_line
-	@echo "[Building rumprun]"
-	${BUILD_RR_CMD_LINE}
-	@echo " [rumprun] rebuilt rumprun sel4"
+       libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,extralibs,extra rump kernel modules,platformobj rumplibs,$(RUMPRUN_FILES) $(SRC_NETBSD_FILES)))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,platforminstall,Install Platform files,platformlibs platformobj extralibs))
+
+$(eval $(call RUMPRUN_BUILD_MACRO,pci,PCI rump kernel modules,platformheaders rumplibs,$(RUMPRUN_FILES) $(SRC_NETBSD_FILES)))
+$(eval $(call RUMPRUN_BUILD_MACRO,platformtoplevel,platform toplevel,userspace toolsconfig,${RUMPRUN_LIB_FILES}))
+
+.PHONY: $(platformobj_TARGET) $(pci_TARGET) $(extralibs_TARGET) rumprun-bottomlevel-support rumprun-toplevel-support
+
+
+rumprun-toplevel-support: $(userspace_TARGET) $(apptools_TARGET) $(platformtoplevel_TARGET)
+	@echo " [Installing rumprun]"
+	$(Q)$(call BUILD_RR_CMD_LINE, install)
+
+rumprun-bottomlevel-support: $(platforminstall_TARGET) $(pci_TARGET) $(rumplibs_TARGET)
+	$(Q)$(call BUILD_RR_CMD_LINE, install)
+	@echo "[$@] done."
 
 
 # Rename muslc's archive from libc.a to libmuslc.a (Don't ask)
