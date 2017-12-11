@@ -69,6 +69,15 @@ LDFLAGS_SEL4:= -L$(STAGE_BASE)/lib $(RUMPRUN_SEL4LIBS:%=-l%)
 CRTOBJFILES_SEL4 := $(STAGE_BASE)/lib/crt1.o $(STAGE_BASE)/lib/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
 FINOBJFILES_SEL4 := $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(STAGE_BASE)/lib/crtn.o
 CFLAGS_SEL4:=-I$(PROJECT_BASE)/stage/x86/pc99/include
+RR_ENV_VARS := PATH=${PATH} SEL4_ARCH=$(SEL4_ARCH) PROJECT_BASE=$(PWD) CC=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper \
+	CXX=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper CFLAGS_SEL4=$(CFLAGS_SEL4) \
+	LDFLAGS_SEL4="$(LDFLAGS_SEL4)" 	CRTOBJFILES_SEL4="$(CRTOBJFILES_SEL4)" 	FINOBJFILES_SEL4="$(FINOBJFILES_SEL4)"
+
+
+BUILD_RR_CMD_LINE = cd $(CURRENT_DIR) && env -i $(RR_ENV_VARS) ./build-rr.sh $(QUIET) \
+	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(CURRENT_DIR))) \
+	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(CURRENT_DIR))) \
+	sel4 -- $(RUMPKERNEL_FLAGS)
 
 # Only set FULLDIRPATH if the COOKFS dir is set to something proper
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),"")
@@ -92,18 +101,7 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
 	@echo "[Building rumprun]"
-	cd $(CURRENT_DIR) && env -i \
-	PATH=${PATH} \
-	SEL4_ARCH=$(SEL4_ARCH) \
-	PROJECT_BASE=$(PWD) \
-	CC=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper \
-	CXX=$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
-	CFLAGS_SEL4=$(CFLAGS_SEL4) LDFLAGS_SEL4="$(LDFLAGS_SEL4)" \
-	CRTOBJFILES_SEL4="$(CRTOBJFILES_SEL4)" FINOBJFILES_SEL4="$(FINOBJFILES_SEL4)" \
-	./build-rr.sh $(QUIET) \
-	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(CURRENT_DIR))) \
-	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(CURRENT_DIR))) \
-	sel4 -- $(RUMPKERNEL_FLAGS)
+	${BUILD_RR_CMD_LINE}
 	@echo " [rumprun] rebuilt rumprun sel4"
 
 
