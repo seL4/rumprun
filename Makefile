@@ -48,15 +48,6 @@ all: rumpsel4
 
 SEL4_INSTALL_HEADERS := $(SOURCE_DIR)/platform/sel4/include/sel4/rumprun
 
-# Rule for update sources on first build
-# Note: This creates a stamp file in the top level source directory
-$(SOURCE_DIR)/.rumpstamp:
-	cd $(SOURCE_DIR) && git submodule init
-	cd $(SOURCE_DIR) && git submodule update
-	cd $(SOURCE_DIR)/src-netbsd && git am ../src-netbsd.patches/*
-	cd $(SOURCE_DIR)/buildrump.sh && git am ../buildrump.sh.patches/*
-	touch $@
-
 # Suppress rump build output unless V is set
 ifeq ($(V),)
 QUIET:=-q -q
@@ -73,7 +64,7 @@ exec $(CCACHE) $1 \"\$$@\"\n
 	echo -e "$(call ccache_wrapper_contents, $*)" | sed -e 's/^[ ]//' >$(@)
 	chmod +x $@
 
-rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config $(SOURCE_DIR)/.rumpstamp \
+rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config \
 	$(CROSS_COMPILE)gcc-wrapper $(CROSS_COMPILE)g++-wrapper
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_DIR)/include/.

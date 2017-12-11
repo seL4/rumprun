@@ -46,6 +46,12 @@ endif
 
 libs-$(CONFIG_RUMPRUN) += rumprun
 
+${CURRENT_DIR}/.rumpstamp:
+	@echo "[rumprun: Updating rumprun sources]"
+	(cd ${CURRENT_DIR} && ./init-sources.sh)
+	@echo "[rumprun: Update complete]"
+
 rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
        libplatsupport libsel4platsupport libsel4vspace \
-       libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test
+       libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
+       ${CURRENT_DIR}/.rumpstamp
