@@ -28,12 +28,6 @@ ${CURRENT_DIR}/.rumpstamp:
 	(cd ${CURRENT_DIR} && ./init-sources.sh)
 	@echo "[rumprun: Update complete]"
 
-# All rumprun source directories.
-SRC_DIRECTORIES := app-tools buildrump.sh include lib platform src-netbsd
-# Find all source rump files.
-RUMPFILES += $(shell find -L $(SRC_DIRECTORIES:%=$(CURRENT_DIR)/%) \( -type f \))
-RUMPFILES += $(shell find $(CURRENT_DIR) -maxdepth 1 -type f)
-
 ifeq ($(SEL4_ARCH), ia32)
 RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
 endif
@@ -79,6 +73,14 @@ BUILD_RR_CMD_LINE = cd $(CURRENT_DIR) && env -i $(RR_ENV_VARS) ./build-rr.sh $(Q
 	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(CURRENT_DIR))) \
 	sel4 -- $(RUMPKERNEL_FLAGS)
 
+BUILD_RR_FILES:= $(shell find -L $(CURRENT_DIR)/buildrump.sh/ \( -type f \))
+SRC_NETBSD_FILES:= $(shell find -L $(CURRENT_DIR)/src-netbsd/ \( -type f \))
+SEL4_PLATFORM_FILES:= $(shell find -L $(CURRENT_DIR)/platform/sel4/ \( -type f \)) $(CURRENT_DIR)/platform/Makefile.inc
+RUMPRUN_LIB_FILES:= $(shell find -L $(CURRENT_DIR)/lib/ \( -type f \))
+RUMPRUN_INCLUDE_FILES:= $(shell find -L $(CURRENT_DIR)/include/ \( -type f \))
+APP_TOOLS_FILES:= $(shell find -L $(CURRENT_DIR)/app-tools/ \( -type f \))
+RUMPRUN_FILES:= $(SEL4_PLATFORM_FILES) $(RUMPRUN_LIB_FILES) $(RUMPRUN_INCLUDE_FILES)
+
 # Only set FULLDIRPATH if the COOKFS dir is set to something proper
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),"")
 ifneq ($(CONFIG_RUMPRUN_COOKFS_DIR),)
@@ -96,8 +98,9 @@ rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocm
        libplatsupport libsel4platsupport libsel4vspace \
        libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
        ${CURRENT_DIR}/.rumpstamp \
-       $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(RUMPFILES) $(PROJECT_BASE)/.config \
-	$(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper
+       $(STAGE_BASE)/lib/libmuslc.a rumprun-setup-librumprunfs $(PROJECT_BASE)/.config \
+	   $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)gcc-wrapper $(RUMPRUN_BUILD_DIR)/$(CROSS_COMPILE)g++-wrapper \
+	$(BUILD_RR_FILES) $(SRC_NETBSD_FILES) $(APP_TOOLS_FILES) $(RUMPRUN_FILES)
 	@echo "[Installing] headers"
 	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
 	@echo "[Building rumprun]"
