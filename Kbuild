@@ -14,8 +14,6 @@ ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
 include ${CURRENT_DIR}/platform/sel4/rumprunlibs.mk
 RUMPRUN_BUILD_DIR := $(BUILD_BASE)/rumprun
 
-ifeq ($(CONFIG_RUMPRUN), y)
-
 mrproper: clean_rump
 
 .PHONY:clean_rump
@@ -24,9 +22,6 @@ clean_rump:
 	$Qrm -rf $(SEL4_RROBJ)
 	$Qrm -rf $(SEL4_RRDEST)
 	$Qrm -rf ${CURRENT_DIR}/.rumpstamp
-
-endif
-
 
 ${CURRENT_DIR}/.rumpstamp:
 	@echo "[rumprun: Updating rumprun sources]"
