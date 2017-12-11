@@ -39,8 +39,9 @@ INSTALLTGTS+=	librumpsel4_stdio_install
 include ../Makefile.inc
 include arch/${ARCHDIR}/Makefile.inc
 
-# Add seL4 header files
-CFLAGS+= -I$(PROJECT_BASE)/stage/x86/pc99/include
+# Add seL4 header files locations
+CFLAGS+= $(CFLAGS_SEL4)
+
 OBJS:=	$(patsubst %.c,${RROBJ}/platform/%.o,${SRCS}) \
 	$(patsubst %.S,${RROBJ}/platform/%.o,${ASMS})
 
@@ -85,10 +86,7 @@ ${INTERMEDIATE_BASEFILE}: ${OBJS}
 	echo "  [Building intermediate basefile]"
 	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
 
-SEL4_LIBDIR = $(PROJECT_BASE)/stage/x86/pc99/lib
-MAINOBJ_LD_FLAGS := $(SEL4_LIBDIR:%=-L%) $(RUMPRUN_SEL4LIBS:%=-l%) $(BASEFILE_LD_FLAGS)
-CRTOBJFILES_SEL4 ?= $(SEL4_LIBDIR)/crt1.o $(SEL4_LIBDIR)/crti.o $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtbegin.o)
-FINOBJFILES_SEL4 ?= $(shell $(CC) $(CFLAGS) $(CPPFLAGS) -print-file-name=crtend.o) $(SEL4_LIBDIR)/crtn.o
+MAINOBJ_LD_FLAGS := $(LDFLAGS_SEL4) $(BASEFILE_LD_FLAGS)
 
 .PHONY: ${MAINOBJ}
 # Look away now
