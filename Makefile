@@ -83,12 +83,6 @@ rumpsel4: $(STAGE_DIR)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_B
 	touch rumpsel4
 
 
-rumphw: $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config
-	@echo "[Building rumprun]"
-	cd $(SOURCE_DIR) && env -i PATH=${PATH2} PROJECT_BASE=$(PROJECT_BASE) \
-	CC=gcc ./build-rr.sh -d $(BUILD2_DIR)/rumprun -o $(BUILD2_DIR)/hw-obj hw -- $(RUMPKERNEL_FLAGS)
-	@echo " [rumprun] rebuilt rumprun hw"
-	touch rumphw
 
 
 .PHONY: stale
