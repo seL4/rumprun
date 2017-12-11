@@ -29,8 +29,10 @@ ifeq ($(SEL4_ARCH), ia32)
 RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
 endif
 
-#Build for release and 32 bit.
+ifeq ($(CONFIG_USER_DEBUG_BUILD),)
+#Build for release.
 RUMPKERNEL_FLAGS+= -r
+endif
 
 #Change TLS model to avoid unnecessary seL4 invocations.
 RUMPKERNEL_FLAGS+= -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic
