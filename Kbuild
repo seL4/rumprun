@@ -9,6 +9,9 @@
 #
 CURRENT_DIR := $(dir $(abspath $(lastword ${MAKEFILE_LIST})))
 PROJECT_BASE := $(PWD)
+ABS_TO_REL= python -c "import os.path; print os.path.relpath('$(1)', '$(2)')"
+# Save the path
+PATH2 := ${PATH}
 
 include ${CURRENT_DIR}/platform/sel4/rumprunlibs.mk
 
@@ -44,14 +47,81 @@ endif
 endif
 
 
-libs-$(CONFIG_RUMPRUN) += rumprun
-
 ${CURRENT_DIR}/.rumpstamp:
 	@echo "[rumprun: Updating rumprun sources]"
 	(cd ${CURRENT_DIR} && ./init-sources.sh)
 	@echo "[rumprun: Update complete]"
 
+# All rumprun source directories.
+SRC_DIRECTORIES := app-tools buildrump.sh include lib platform src-netbsd
+# Find all source rump files.
+RUMPFILES += $(shell find -L $(SRC_DIRECTORIES:%=$(CURRENT_DIR)/%) \( -type f \))
+RUMPFILES += $(shell find $(CURRENT_DIR) -maxdepth 1 -type f)
+
+# Force rebuild if RUMPSTALE is set (For when the COOKFS directory is updated)
+ifeq ($(RUMPSTALE), 1)
+COOKFS_REBUILD := stale
+endif
+
+ifeq ($(SEL4_ARCH), ia32)
+RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
+endif
+
+ifeq ($(CONFIG_USER_DEBUG_BUILD),)
+#Build for release.
+RUMPKERNEL_FLAGS+= -r
+endif
+
+#Change TLS model to avoid unnecessary seL4 invocations.
+RUMPKERNEL_FLAGS+= -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic
+
+SEL4_INSTALL_HEADERS := $(CURRENT_DIR)/platform/sel4/include/sel4/rumprun
+
+# Suppress rump build output unless V is set
+ifeq ($(V),)
+QUIET:=-q -q
+endif
+
+# This wraps the call to ccache in a shell script because the rumprun build doesn't
+# expand the variable correctly if we try CC=ccache gcc.
+# See here for more info: https://wiki.netbsd.org/tutorials/using_ccache_with_build_sh/
+ccache_wrapper_contents = \
+\#!/bin/sh \n\
+exec $(CCACHE) $1 \"\$$@\"\n
+
+$(BUILD_BASE)/rumprun/%-wrapper:
+	mkdir -p $(BUILD_BASE)/rumprun
+	echo -e "$(call ccache_wrapper_contents, $*)" | sed -e 's/^[ ]//' >$(@)
+	chmod +x $@
+
 rumprun: $(libc) libsel4 libcpio libelf libsel4muslcsys libsel4vka libsel4allocman \
        libplatsupport libsel4platsupport libsel4vspace \
        libsel4utils libsel4simple libutils libsel4debug libsel4sync libsel4serialserver libsel4test \
-       ${CURRENT_DIR}/.rumpstamp
+       ${CURRENT_DIR}/.rumpstamp \
+       $(STAGE_BASE)/lib/libmuslc.a $(COOKFS_REBUILD) $(RUMPFILES) $(PROJECT_BASE)/.config \
+	$(BUILD_BASE)/rumprun/$(CROSS_COMPILE)gcc-wrapper $(BUILD_BASE)/rumprun/$(CROSS_COMPILE)g++-wrapper
+	@echo "[Installing] headers"
+	cp -r $(SEL4_INSTALL_HEADERS) $(STAGE_BASE)/include/.
+	@echo "[Building rumprun]"
+	cd $(CURRENT_DIR) && env -i \
+	PATH=${PATH2} \
+	SEL4_ARCH=$(SEL4_ARCH) \
+	PROJECT_BASE=$(PWD) \
+	CC=$(BUILD_BASE)/$@/$(CROSS_COMPILE)gcc-wrapper \
+	CXX=$(BUILD_BASE)/$@/$(CROSS_COMPILE)g++-wrapper \
+	./build-rr.sh $(QUIET) \
+	-d $(shell $(call ABS_TO_REL,$(SEL4_RRDEST),$(CURRENT_DIR))) \
+	-o $(shell $(call ABS_TO_REL,$(SEL4_RROBJ),$(CURRENT_DIR))) \
+	sel4 -- $(RUMPKERNEL_FLAGS)
+	@echo " [rumprun] rebuilt rumprun sel4"
+
+
+
+
+.PHONY: stale
+stale:
+	@echo " [rumprun] cookfs directory was updated"
+
+# Rename muslc's archive from libc.a to libmuslc.a (Don't ask)
+$(STAGE_BASE)/lib/libmuslc.a:
+	cp $(STAGE_BASE)/lib/libc.a $(STAGE_BASE)/lib/libmuslc.a
