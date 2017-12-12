@@ -155,3 +155,8 @@ rumprun-bottomlevel-support: $(platforminstall_TARGET) $(pci_TARGET) $(rumplibs_
 # Rename muslc's archive from libc.a to libmuslc.a (Don't ask)
 $(STAGE_BASE)/lib/libmuslc.a: $(libc)
 	cp $(STAGE_BASE)/lib/libc.a $(STAGE_BASE)/lib/libmuslc.a
+
+$(STAGE_BASE)/bin/rump/%: % rumprun-bottomlevel-support
+	$(Q)mkdir -p $(STAGE_BASE)/bin/rump
+	$(Q)RUMPRUN_BASEDIR=$(dir $(BASEFILE)) rumprun-bake $($<_rr_config) $@ $($<_bin_name)
+	@echo " [bin] created $@"
