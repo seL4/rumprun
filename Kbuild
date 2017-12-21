@@ -125,7 +125,7 @@ $(eval $(call RUMPRUN_BUILD_MACRO,userspace,Rumprun userspace libraries,rumplibs
 
 $(eval $(call RUMPRUN_BUILD_MACRO,platformheaders,Platform headers,toolsconfig install_headers,$(RUMPRUN_FILES)))
 
-$(eval $(call RUMPRUN_BUILD_MACRO,platformlibs,Rumprun platform libraries,platformheaders rumplibs,\
+$(eval $(call RUMPRUN_BUILD_MACRO,platformlibs,Rumprun platform libraries,platformheaders rumplibs userspace,\
 	rumprun-setup-librumprunfs $(RUMPRUN_LIB_FILES) $(RUMPRUN_INCLUDE_FILES)))
 
 $(eval $(call RUMPRUN_BUILD_MACRO,platformobj,Platform object files,userspace platformheaders rumplibs,\
