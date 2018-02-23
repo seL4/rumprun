@@ -311,7 +311,7 @@ checktools ()
 	delay=5
 
 	# check that gcc is modern enough
-	vers=$(${CC:-cc} -E -dM - < /dev/null | awk '
+	vers=$(${CC:-cc} -E -dM - < /dev/null | LANG=C awk '
 	    /__GNUC__/ {version += 100*$3}
 	    /__GNUC_MINOR__/ {version += $3}
 	    END { print version; if (version) exit 0; exit 1; }') \
@@ -328,7 +328,7 @@ checktools ()
 	fi
 
 	# check that ld is modern enough
-	vers=$(${CC:-cc} -Wl,--version 2>&1 | awk '
+	vers=$(${CC:-cc} -Wl,--version 2>&1 | LANG=C awk '
 	    /GNU ld/{version += 100*$NF}
 	    END { print version; if (version) exit 0; exit 1; }') \
 		|| die unable to probe ld version
@@ -352,6 +352,13 @@ buildtools ()
 	extracflags=
 	[ "${MACHINE_GNU_ARCH}" = "x86_64" ] \
 	    && extracflags='-F CFLAGS=-mno-red-zone'
+		
+	
+	# Disable new errors on GCC 7 which break netbsd-src compilation
+	#
+	[ `gcc -dumpversion | cut -f1 -d.` -ge 7 ] \
+		&& extracflags="$extracflags -F CPPFLAGS=-Wimplicit-fallthrough=0"	
+
 
 	# build tools
 	${BUILDRUMP}/buildrump.sh ${BUILD_QUIET} ${STDJ} -k		\
@@ -501,6 +508,14 @@ makeconfig ()
 	else
 		echo "CONFIG_CXX=no" >> ${1}
 	fi
+
+	# Check for if compiler supports -no-pie and save to EXTRACCFLAGS
+	gccnopie=
+	if [ -z "`echo 'int p=1;' | ${CC} -no-pie -S -o /dev/null -x c - 2>&1`" ]; then
+		gccnopie=-no-pie
+	fi
+	echo "EXTRACCFLAGS=${quote}${gccnopie}${quote}" >> ${1}
+
 }
 
 dobuild ()
