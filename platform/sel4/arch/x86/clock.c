@@ -102,10 +102,7 @@ void
 x86_initclocks(void)
 {
 
-    uint64_t tsc_freq = simple_get_arch_info(&env.simple) * US_IN_S;
-    if (!is_ltimer(&env.custom_simple)) {
-        tsc_freq = env.custom_simple.timer_config.interface.tsc_freq;
-    }
+    uint64_t tsc_freq = env.custom_simple.timer_config.tsc_freq;
 
     tsc_base = rdtsc_pure();
 

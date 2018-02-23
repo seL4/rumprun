@@ -103,14 +103,6 @@ static seL4_CPtr simple_default_nth_cap(void *data, int n)
     return n;
 }
 
-
-static seL4_Word simple_default_arch_info(void *data)
-{
-    ZF_LOGE_IF(data == NULL, "Data is null!");
-
-    return ((init_data_t *)data)->tsc_freq;
-}
-
 int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace_t *vspace, sel4utils_alloc_data_t *alloc_data,
                                           vka_t *vka)
 {
@@ -230,6 +222,7 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     custom_simple->rumprun_memory_size = init_data->rumprun_memory_size;
     custom_simple->timer_config.timer_ntfn = init_data->timer_signal;
     custom_simple->timer_config.timer = TIMER_LTIMER;
+    custom_simple->timer_config.tsc_freq = init_data->tsc_freq;
     custom_simple->serial_config.serial = SERIAL_SERVER;
     custom_simple->rpc_ep = init_data->rpc_ep;
     custom_simple->serial_config.ep = init_data->serial_ep;
@@ -245,7 +238,6 @@ void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint)
     simple->untyped_count = &simple_default_untyped_count;
     simple->nth_untyped = &simple_default_nth_untyped;
     simple->nth_cap = &simple_default_nth_cap;
-    simple->arch_info = &simple_default_arch_info;
     simple->sched_ctrl = &simple_default_sched_control;
     simple->core_count = &simple_default_core_count;
     arch_init_simple(simple);

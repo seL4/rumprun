@@ -44,9 +44,9 @@ typedef struct serial_config {
 typedef struct timer_config {
     enum timer_variant timer;
     seL4_CPtr timer_ntfn;
+    uint64_t tsc_freq;
     union {
         struct {
-            uint64_t tsc_freq;
             int (*oneshot_relative)(int tid, uint64_t ns);
         } interface;
         struct {
