@@ -84,7 +84,7 @@ endif
 
 ${INTERMEDIATE_BASEFILE}: ${OBJS}
 	echo "  [Building intermediate basefile]"
-	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ -Wl,-r
+	${CC} -nostdlib ${CFLAGS} ${OBJS} -o $@ $(LDFLAGS-y) -Wl,-r
 
 MAINOBJ_LD_FLAGS := $(LDFLAGS_SEL4) $(BASEFILE_LD_FLAGS)
 

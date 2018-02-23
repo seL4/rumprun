@@ -5,7 +5,7 @@ RUMPTOP= ${TOPRUMP}
 LIB=	unwind
 INCSDIR=/usr/include
 
-CPPFLAGS+= -isystem ${DESTDIR}/usr/include/c++
+CPPFLAGS+= -isystem ${DESTDIR}/usr/include -isystem ${DESTDIR}/usr/include/c++ -Wno-error=shift-negative-value
 
 LIBC_MACHINE_CPU?= ${MACHINE_CPU}
 .include "${RUMPTOP}/../lib/libunwind/Makefile.inc"

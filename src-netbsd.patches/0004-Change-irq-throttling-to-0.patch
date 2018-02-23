@@ -1,7 +1,7 @@
-From 8009c621ffd1ec504a6d5bffb236289d406a839a Mon Sep 17 00:00:00 2001
+From a259bf48c9a85105b99dbb4ff9a4df65d44caa08 Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Tue, 12 Sep 2017 13:58:54 +1000
-Subject: [PATCH 4/5] Change irq throttling to 0
+Subject: [PATCH 4/6] Change irq throttling to 0
 
 ---
  sys/dev/pci/if_wm.c | 2 +-

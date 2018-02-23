@@ -1,7 +1,7 @@
-From 2d933578dc6e1984e215887793716a02beed6153 Mon Sep 17 00:00:00 2001
+From eee59af39cd3e6af944a9bb498e38894603311dc Mon Sep 17 00:00:00 2001
 From: Kent McLeod <Kent.Mcleod@data61.csiro.au>
 Date: Thu, 26 Oct 2017 12:39:41 +1100
-Subject: [PATCH 5/5] Increase rx decscriptors to 4096
+Subject: [PATCH 5/6] Increase rx decscriptors to 4096
 
 ---
  sys/dev/pci/if_wm.c | 2 +-

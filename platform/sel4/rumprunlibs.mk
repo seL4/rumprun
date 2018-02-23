@@ -46,9 +46,15 @@ RUMPRUN_CC = $(RUMPRUN_BIN_DIR)/$(RUMPRUN_TOOLTUPLE)-gcc
 # compiler front end for constructing the rumprun basefile manually.
 # Note: this is a different compiler than RUMPRUN_CC mentioned above.
 BASEFILE_CC := $(shell grep "CC=" $(SEL4_RROBJ)/config.mk 2>/dev/null | cut  -c 4-)
+
+check-cc-option = $(shell if [ -z "`echo 'int p=1;' | $(CC) $(1) -S -o /dev/null -x c - 2>&1`" ]; \
+                       then echo y; else echo n; fi)
+# Disable PIE, but need to check if compiler supports it
+LDFLAGS-$(call check-cc-option,-no-pie) += -no-pie
+
 # Extra linker flags for constructing rumprun basefile manually.
 BASEFILE_LIB_DIRS = $(SEL4_RROBJ)/lib/libbmk_core $(SEL4_RROBJ)/lib/libbmk_rumpuser
-BASEFILE_LD_FLAGS = -Wl,-r \
+BASEFILE_LD_FLAGS = $(LDFLAGS-y) -Wl,-r \
  					$(BASEFILE_LIB_DIRS:%=-L%) \
 					-u __vsyscall_ptr  \
 					-Wl,--whole-archive \
