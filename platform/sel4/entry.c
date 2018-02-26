@@ -329,7 +329,8 @@ int init_rumprun(custom_simple_t *custom_simple)
     }
 
 
-    res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), custom_get_priority(&env.custom_simple) - 1);
+    seL4_CPtr auth = simple_get_tcb(&env.simple);
+    res = seL4_TCB_SetPriority(simple_get_tcb(&env.simple), auth, custom_get_priority(&env.custom_simple) - 1);
     ZF_LOGF_IF(res != 0, "seL4_TCB_SetPriority thread failed");
 
     NAME_THREAD(env.pci_thread.tcb.cptr, "pci thread");
