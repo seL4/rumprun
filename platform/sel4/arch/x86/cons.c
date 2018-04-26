@@ -78,8 +78,11 @@ void debug_putchar(int c) {
 #endif
 }
 
-void __arch_putchar(int c) {
-    vcons_putc(c);
+static size_t cons_write(void* data, size_t count) {
+    for (int i = 0; i < count; i++) {
+        vcons_putc(((char*)data)[i]);
+    }
+    return count;
 }
 
 void cons_init(void)
@@ -96,7 +99,7 @@ void cons_init(void)
             shmem_index = 0;
         }
     }
-
+    sel4muslcsys_register_stdio_write_fn(cons_write);
     bmk_printf_init(vcons_putc, vcons_flush);
 }
 

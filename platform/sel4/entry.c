@@ -295,6 +295,7 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     /* initialse cspace, vspace and untyped memory allocation */
     init_allocator(&env);
+    cons_init();
 
 
     int res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
@@ -309,8 +310,6 @@ int init_rumprun(custom_simple_t *custom_simple)
         sel4utils_rpc_ltimer_init(&custom_simple->timer_config.ltimer.ltimer, env.io_ops,
                                   custom_simple->rpc_ep, TIMER_LABEL);
     }
-
-    cons_init();
 
     res = vka_alloc_notification(&env.vka, &env.pci_notification);
     ZF_LOGF_IF(res != 0, "Failed to allocate notification object");
