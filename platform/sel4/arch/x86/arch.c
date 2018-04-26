@@ -20,11 +20,12 @@
 
 /* The below functions are implementations of the libsel4simple arch specific interface.
    See libsel4simple/arch_include/x86/simple/arch/simple.h for further documentation */
-static seL4_CPtr
-get_IOPort_cap(void *data, uint16_t start_port, uint16_t end_port)
+static seL4_Error
+get_IOPort_cap(void *data, uint16_t start_port, uint16_t end_port, seL4_Word root, seL4_Word dest, seL4_Word depth)
 {
     init_data_t *init = (init_data_t *) data;
-    return init->io_port;
+
+    return seL4_CNode_Copy(root, dest, depth, simple_get_cnode(&env.simple), init->io_port, CONFIG_WORD_SIZE, seL4_AllRights);
 }
 
 void

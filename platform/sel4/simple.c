@@ -36,7 +36,9 @@ static seL4_CPtr simple_default_init_cap(void *data, seL4_CPtr cap_pos)
         case seL4_CapIRQControl: /* global IRQ controller cap */
             cap = init_data->irq_control;
             break;
-        case seL4_CapIOPort: /* global IO port cap (null cap if not supported) */
+        case seL4_CapIOPortControl:
+        /* IO port cap (null cap if not supported)
+           This cap won't be a control cap, but we use the same slot index */
             cap = init_data->io_port;
             break;
         case seL4_CapIOSpace: /* global IO space cap (null cap if no IOMMU support) */

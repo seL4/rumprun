@@ -301,7 +301,7 @@ int init_rumprun(custom_simple_t *custom_simple)
     int res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
     ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
 
-    res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple);
+    res = sel4platsupport_get_io_port_ops(&env.io_ops.io_port_ops, &env.simple, &env.vka);
     ZF_LOGF_IF(res != 0, "sel4platsupport_get_io_port_ops failed");
 
     sel4platsupport_new_malloc_ops(&env.io_ops.malloc_ops);
