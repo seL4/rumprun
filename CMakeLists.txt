@@ -14,7 +14,6 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(rumprun NONE)
 
-set(KernelArch "x86" CACHE STRING "" FORCE)
 if(Kernel64)
     set(rumprun_arch "x86_64")
     set(rumprun_sel4_arch "${rumprun_arch}")
