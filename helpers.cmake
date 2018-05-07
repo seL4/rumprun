@@ -12,6 +12,9 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+# Force morecorebytes to 0.
+set(LibSel4MuslcSysMorecoreBytes 0 CACHE STRING "" FORCE)
+
 # Function for creating custom_target to invoke rumprun-bake to create a seL4 rumprun binary
 # target_name is the name of the custom_target to be created.  The binary name will be ${target_name}.bin
 # CONFIG is an optional argument that specifies a what rumprun config to be used. Its default value is sel4_generic

@@ -33,9 +33,6 @@ endif()
 # Change TLS model to avoid unnecessary seL4 invocations.
 list(APPEND RUMPKERNEL_FLAGS -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic)
 
-# Force morecorebytes to 0.
-set(LibSel4MuslcSysMorecoreBytes 0 CACHE STRING "" FORCE)
-
 set(configure_string "")
 config_string(RumprunTMPFSNumMiB RUMPRUN_TMPFS_NUM_MiB "Set this to the size of memory \
     you want to back the tmpfs at /tmp."
