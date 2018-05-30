@@ -23,7 +23,7 @@ else()
     set(rumprun_arch "i486")
     set(rumprun_sel4_arch "i386")
     set(rumprun_tuple "i486-rumprun-netbsdelf")
-    list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m32)
+    list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m32 -F ACLFLAGS=-fno-pic)
 endif()
 
 # Build for release (Without debug symbols)

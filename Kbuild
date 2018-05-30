@@ -29,7 +29,7 @@ ${CURRENT_DIR}/.rumpstamp:
 	@echo "[rumprun: Update complete]"
 
 ifeq ($(SEL4_ARCH), ia32)
-RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32
+RUMPKERNEL_FLAGS+= -F ACLFLAGS=-m32 -F ACLFLAGS=-fno-pic
 endif
 
 ifeq ($(CONFIG_USER_DEBUG_BUILD),)
