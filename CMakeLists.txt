@@ -45,6 +45,12 @@ config_string(RumprunCookfsDir RUMPRUN_COOKFS_DIR
     DEFAULT " "
 )
 
+config_option(UseLargePages USE_LARGE_PAGES "Use large pages for rumprun backing memory.  This reduces the amount of book keeping required \
+        to track the pages created and also reduces initialisation time.  However, mprotect depends on \
+        4k pages in order to remap the pages with new permissions.  Thus, enabling large pages results in \
+        disabling the stack guard page functionality.  Use at own risk."
+        DEFAULT OFF)
+
 add_config_library(rumprun "${configure_string}")
 
 # Only set FULLDIRPATH if the COOKFS dir is set to something proper
