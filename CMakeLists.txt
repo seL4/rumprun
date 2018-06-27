@@ -195,12 +195,17 @@ CreateRumprunBuildCommand(apptools "Rumprun app toolchains"
 CreateRumprunBuildCommand(userspace "Rumprun userspace libraries"
     RUMP_TARGETS rumplibs)
 
+CreateRumprunBuildCommand(platformtoplevel "platform toplevel"
+    RUMP_TARGETS userspace toolsconfig
+    FILE_DEPS ${RUMPRUN_LIB_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/platform/makepseudolinkstubs.sh
+)
+
 CreateRumprunBuildCommand(platformheaders "Platform headers"
     RUMP_TARGETS toolsconfig
     FILE_DEPS ${SEL4_PLATFORM_FILES} ${RUMPRUN_LIB_FILES} ${RUMPRUN_INCLUDE_FILES})
 
 CreateRumprunBuildCommand(platformlibs "Rumprun platform libraries"
-    RUMP_TARGETS platformheaders rumplibs userspace
+    RUMP_TARGETS platformheaders rumplibs userspace platformtoplevel
     FILE_DEPS ${CMAKE_CURRENT_BINARY_DIR}/build-temp/.librumrunfs.stamp ${RUMPRUN_LIB_FILES} ${RUMPRUN_INCLUDE_FILES})
 
 # platformobj, rump_pci, and extralibs targets all depend on seL4 header files that we can't easily track
@@ -223,18 +228,13 @@ CreateRumprunBuildCommand(pci "PCI rump kernel modules" PHONY TARGET_NAME rump_p
     RUMP_TARGETS platformheaders rumplibs
     FILE_DEPS ${SEL4_PLATFORM_FILES} ${RUMPRUN_LIB_FILES} ${RUMPRUN_INCLUDE_FILES} ${SRC_NETBSD_FILES} ${RUMPRUN_SEL4LIBS} muslc)
 
-CreateRumprunBuildCommand(platformtoplevel "platform toplevel"
-    RUMP_TARGETS userspace toolsconfig
-    FILE_DEPS ${RUMPRUN_LIB_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/platform/makepseudolinkstubs.sh
-)
-
 # Install commands install artifacts to the rumprun install directory.  Top level is everything required to build rumprun applications
 # bottom level is everything required to link a rumprun app with the bottom level platform libraries and basefiles.
 CreateRumprunBuildCommand(install "install toplevel"
     RUMP_TARGETS userspace apptools  platformtoplevel
     TARGET_NAME  rumprun_install_toplevel)
 CreateRumprunBuildCommand(install "install bottomlevel" PHONY
-    RUMP_TARGETS platforminstall rump_pci rumplibs
+    RUMP_TARGETS platforminstall rump_pci rumplibs rumprun_install_toplevel
     TARGET_NAME  rumprun_install_bottomlevel)
 
 
