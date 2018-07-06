@@ -7,4 +7,4 @@ CPPFLAGS+=	-Iarch/arm
 
 .PHONY: archdirs
 archdirs:
-        mkdir -p ${RROBJ}/platform/arch/arm/integrator
+	mkdir -p ${RROBJ}/platform/arch/arm/integrator
