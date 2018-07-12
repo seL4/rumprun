@@ -166,14 +166,18 @@ bmk_isr_rumpkernel(int (*func)(void *), void *arg, int intr, int flags)
 		isr_lowest = intr;
 }
 
+#if (defined(__i386__) || defined(__x86_64__))
 void serialcons_putc(int c);
 unsigned char getDebugChar(void);
+#endif
 
 void
 isr(int which)
 {
 	if ((which & 1<<4) != 0) {
+#if (defined(__i386__) || defined(__x86_64__))
 		serialcons_putc(getDebugChar());
+#endif
 		cpu_intr_ack(1<<4);
 		which &= ~(1<<4);
 	}
