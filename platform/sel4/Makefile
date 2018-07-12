@@ -23,6 +23,10 @@ endif
 ifeq (${MACHINE},amd64)
 supported:= true
 endif
+ifeq (${MACHINE},evbarm)
+ARCHDIR=arm
+supported:= true
+endif
 ifneq (${supported},true)
 $(error only supported target is x86, you have ${MACHINE})
 endif
