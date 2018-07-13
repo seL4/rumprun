@@ -1,0 +1,40 @@
+From 282f7ede4ae524587a78ddd3b17bdf65aa0dcd04 Mon Sep 17 00:00:00 2001
+From: Damon Lee <Damon.Lee@data61.csiro.au>
+Date: Thu, 12 Jul 2018 15:11:40 +1000
+Subject: [PATCH 2/2] Use the correct ARM machine names
+
+---
+ buildrump.sh | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/buildrump.sh b/buildrump.sh
+index 1864f1f..4c6bd62 100755
+--- a/buildrump.sh
++++ b/buildrump.sh
+@@ -784,7 +784,7 @@ makebuild ()
+ 	    && appendvar DIRS_second ${SRCDIR}/sys/rump/share
+ 
+ 	if [ ${MACHINE} = "i386" -o ${MACHINE} = "amd64" \
+-	     -o ${MACHINE#evbearm} != ${MACHINE} \
++	     -o ${MACHINE} = "evbarm" \
+ 	     -o ${MACHINE#evbppc} != ${MACHINE} ]; then
+ 		DIRS_emul=sys/rump/kern/lib/libsys_linux
+ 	fi
+@@ -1176,10 +1176,12 @@ probearm ()
+ 
+ 	# check for big endian
+ 	if cppdefines '__ARMEL__'; then
+-		MACHINE="evbearm${hf}-el"
++		#MACHINE="evbearm${hf}-el"
++		MACHINE="evbarm"
+ 		MACHINE_GNU_ARCH="arm"
+ 	else
+-		MACHINE="evbearm${hf}-eb"
++		#MACHINE="evbearm${hf}-eb"
++		MACHINE="evbarm"
+ 		MACHINE_GNU_ARCH="armeb"
+ 	fi
+ 
+-- 
+2.11.0
+
