@@ -1,0 +1,25 @@
+From a45baebcc4c196cfc23cfcf745a855c0e179d629 Mon Sep 17 00:00:00 2001
+From: Damon Lee <Damon.Lee@data61.csiro.au>
+Date: Thu, 12 Jul 2018 15:10:41 +1000
+Subject: [PATCH 1/2] Use the correct FP macro for ARM
+
+---
+ buildrump.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/buildrump.sh b/buildrump.sh
+index e5f3a93..1864f1f 100755
+--- a/buildrump.sh
++++ b/buildrump.sh
+@@ -1168,7 +1168,7 @@ probearm ()
+ 	# build to use hardfloat if the compiler defaults to VFP.
+ 	# This is because the softfloat env is not always functional
+ 	# in case hardfloat is the compiler default.
+-	if cppdefines __VFP_FP__; then
++	if cppdefines __ARM_PCS_VFP; then
+ 		hf=hf
+ 	else
+ 		hf=
+-- 
+2.11.0
+
