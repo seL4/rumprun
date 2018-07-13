@@ -1,0 +1,29 @@
+From 383fe59e14c959d62aa4d19dc90ddfe986d04811 Mon Sep 17 00:00:00 2001
+From: Damon Lee <Damon.Lee@data61.csiro.au>
+Date: Thu, 12 Jul 2018 15:16:33 +1000
+Subject: [PATCH] Remove non-existing files
+
+---
+ sys/lib/libkern/Makefile.compiler-rt | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/sys/lib/libkern/Makefile.compiler-rt b/sys/lib/libkern/Makefile.compiler-rt
+index 711cf524..2fb11609 100644
+--- a/sys/lib/libkern/Makefile.compiler-rt
++++ b/sys/lib/libkern/Makefile.compiler-rt
+@@ -106,9 +106,9 @@ GENERIC_SRCS+= \
+ 	aeabi_idivmod.S \
+ 	aeabi_ldivmod.S \
+ 	aeabi_uidivmod.S \
+-	aeabi_uldivmod.S \
+-	__aeabi_idiv0.c \
+-	__aeabi_ldiv0.c
++	aeabi_uldivmod.S
++#	__aeabi_idiv0.c \
++#	__aeabi_ldiv0.c
+ .  endif
+ .endif
+ 
+-- 
+2.11.0
+
