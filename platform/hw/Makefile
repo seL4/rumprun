@@ -62,7 +62,7 @@ ${MAINOBJ}: ${OBJS} platformlibs
 	    -L${RROBJLIB}/libbmk_core -L${RROBJLIB}/libbmk_rumpuser \
 	    -Wl,--whole-archive -lbmk_rumpuser -lbmk_core -Wl,--no-whole-archive
 	${OBJCOPY} -w -G bmk_* -G rumpuser_* -G jsmn_* \
-	    -G rumprun_platform_rumpuser_init -G _start $@
+	    -G rumprun_platform_rumpuser_init -G _start -G __aeabi* $@
 
 clean: commonclean
 	rm -f ${OBJS_BMK} include/hw/machine buildtest ${MAINOBJ}
