@@ -14,24 +14,41 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(rumprun NONE)
 
-if(Kernel64)
-    set(rumprun_arch "x86_64")
-    set(rumprun_sel4_arch "${rumprun_arch}")
-    set(rumprun_tuple "x86_64-rumprun-netbsd")
-    list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m64)
+if(KernelArchX86)
+    if(Kernel64)
+        set(rumprun_arch "x86_64")
+        set(rumprun_sel4_arch "${rumprun_arch}")
+        set(rumprun_tuple "x86_64-rumprun-netbsd")
+        list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m64)
+    else()
+        set(rumprun_arch "i486")
+        set(rumprun_sel4_arch "i386")
+        set(rumprun_tuple "i486-rumprun-netbsdelf")
+        list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m32 -F ACLFLAGS=-fno-pic)
+    endif()
+elseif(KernelArchARM)
+    if(Kernel64)
+        message(FATAL_ERROR "Only ARM 32-bit (aarch32) is supported at the moment.")
+    else()
+        set(rumprun_arch "arm")
+        set(rumprun_sel4_arch "aarch32")
+        set(rumprun_tuple "arm-rumprun-netbsdelf-eabi")
+        # Suppress warnings that would otherwise stop the compilation
+        list(APPEND RUMPKERNEL_FLAGS -F CWARNFLAGS=-w)
+    endif()
 else()
-    set(rumprun_arch "i486")
-    set(rumprun_sel4_arch "i386")
-    set(rumprun_tuple "i486-rumprun-netbsdelf")
-    list(APPEND RUMPKERNEL_FLAGS -F ACLFLAGS=-m32 -F ACLFLAGS=-fno-pic)
+    # Print a message alerting the user that only x86 and ARM (aarch32) architectures are supported.
+    message(FATAL_ERROR "Only x86 and ARM (aarch32) architectures are supported for Rumprun.")
 endif()
 
 # Build for release (Without debug symbols)
 if("${CMAKE_BUILD_TYPE}" IN_LIST "Release;MinSizeRel")
     list(APPEND RUMPKERNEL_FLAGS -r)
 endif()
-# Change TLS model to avoid unnecessary seL4 invocations.
-list(APPEND RUMPKERNEL_FLAGS -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic)
+# Change TLS model to avoid unnecessary seL4 invocations. (Only x86 exclusive for now.)
+if(KernelArchX86)
+    list(APPEND RUMPKERNEL_FLAGS -F CFLAGS=-mno-tls-direct-seg-refs -F CFLAGS=-ftls-model=global-dynamic)
+endif()
 
 set(configure_string "")
 config_string(RumprunTMPFSNumMiB RUMPRUN_TMPFS_NUM_MiB "Set this to the size of memory \
@@ -79,8 +96,7 @@ set(RR_ENV_VARS PATH=$ENV{PATH}
     SEL4_ARCH=${rumprun_sel4_arch}
     RUMPRUN_BASE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
     RUMP_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
-    CC=gcc CXX=g++)
-
+    CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER})
 
 set(RUMPRUN_SEL4LIBS sel4 sel4muslcsys sel4vka sel4allocman platsupport sel4platsupport platsupport sel4vspace
        sel4serialserver sel4test sel4utils sel4simple-default sel4simple sel4debug utils cpio elf)
