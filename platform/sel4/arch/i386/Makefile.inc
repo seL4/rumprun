@@ -10,7 +10,6 @@
 # @TAG(DATA61_BSD)
 #
 
-SRCS+=	arch/x86/cons.c
 SRCS+=	arch/x86/clock.c arch/x86/arch.c
 
 CFLAGS+=	-mno-sse -mno-mmx -march=i686

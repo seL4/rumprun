@@ -36,7 +36,7 @@ SEL4_MACHINE_ARCH?= ${MACHINE_GNU_ARCH}
 
 
 LDSCRIPT:=	$(abspath stage2.lds)
-SRCS+=		entry.c undefs.c kernel.c intr.c simple.c
+SRCS+=		entry.c undefs.c kernel.c intr.c simple.c cons.c
 
 INSTALLTGTS+=	librumpsel4_stdio_install
 
