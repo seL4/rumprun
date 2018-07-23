@@ -244,22 +244,6 @@ void rump_irq_handle(int intr, int soft_intr)
 
 static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
 {
-
-    /* Set up TLS for main thread.  The main thread can't do this itself
-        so this thread is used before it actually handles PCI stuff */
-    seL4_UserContext context;
-    int res = seL4_TCB_ReadRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
-    ZF_LOGF_IF(res, "Could not read registers");
-    context.tls_base = (seL4_Word)&env.tls_base_ptr;
-    /* When you call write registers on a thread, seL4 changes it to be restarted.
-       Because the target thread is of a lower priority, its last instruction was an
-       invocation that set the current thread to running. The eip needs to be incremented
-       so that the target thread is resumed correctly instead of recalling the invocation. */
-    seL4_Word pc = sel4utils_get_instruction_pointer(context);
-    sel4utils_set_instruction_pointer(&context, pc + ARCH_SYSCALL_INSTRUCTION_SIZE);
-    res = seL4_TCB_WriteRegisters(simple_get_tcb(&env.simple), 1, 0, (sizeof(seL4_UserContext) / sizeof(seL4_Word)), &context );
-    ZF_LOGF_IF(res, "Could not write registers");
-
     env.mask_the_mask = 0;
     while (1) {
         seL4_Word sender_badge;
@@ -339,6 +323,11 @@ int init_rumprun(custom_simple_t *custom_simple)
                                  1);
 
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_pci_interrupt) failed");
+
+
+    /* Set up TLS for main thread. */
+    res = arch_init_tls(&env, (seL4_Word *)&env.tls_base_ptr);
+    ZF_LOGF_IF(res != 0, "failed to set TLS base pointer");
 
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space = simple_init_cap(&env.simple, seL4_CapIOSpace);
