@@ -213,7 +213,8 @@ CreateRumprunBuildCommand(platformlibs "Rumprun platform libraries"
 CreateRumprunBuildCommand(platformobj "Platform object files" PHONY
     ENV_VARS "LDFLAGS_SEL4=${LDFLAGS_SEL4}" "CRTOBJFILES_SEL4=${CRTObjFiles}" "FINOBJFILES_SEL4=${FinObjFiles}" "CFLAGS_SEL4=${CFLAGS_SEL4}"
     RUMP_TARGETS userspace platformheaders rumplibs
-    FILE_DEPS ${SEL4_PLATFORM_FILES} ${RUMPRUN_LIB_FILES} ${RUMPRUN_INCLUDE_FILES} ${RUMPRUN_SEL4LIBS} muslc)
+    FILE_DEPS ${SEL4_PLATFORM_FILES} ${RUMPRUN_LIB_FILES} ${RUMPRUN_INCLUDE_FILES} ${RUMPRUN_SEL4LIBS} muslc
+    OUTPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj/rumprun-intermediate.o)
 
 CreateRumprunBuildCommand(extralibs "extra rump kernel modules" PHONY
     ENV_VARS "CFLAGS_SEL4=${CFLAGS_SEL4}"
@@ -266,3 +267,8 @@ set(RUMPRUN_TOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj
 set(RUMPRUN_BASEDIR "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj" CACHE INTERNAL "" FORCE)
 set(RUMPRUN_TOOLS_PREFIX "${rumprun_sel4_arch}--netbsd" CACHE INTERNAL "" FORCE)
 set(RUMPRUN_TOOLCHAIN_PATH "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/rumprun/bin" CACHE INTERNAL "" FORCE)
+
+add_library(rumprun_intermediate_file STATIC IMPORTED GLOBAL)
+target_link_libraries(rumprun_intermediate_file LINK_INTERFACE_LIBRARIES rumprun ${RUMPRUN_SEL4LIBS})
+set_property(TARGET rumprun_intermediate_file PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj/rumprun-intermediate.o")
+add_dependencies(rumprun_intermediate_file platformobj)
