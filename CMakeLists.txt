@@ -261,3 +261,8 @@ set_property(TARGET rumprun_toplevel_support PROPERTY RUMPRUN_TOOLCHAIN_PATH "${
 set_property(TARGET rumprun_toplevel_support PROPERTY RUMPRUN_TOOLCHAIN_CMAKE "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/rumprun/rumprun-${rumprun_arch}/share/${rumprun_tuple}-toolchain.cmake")
 set_property(TARGET rumprun_toplevel_support PROPERTY RUMPRUN_TOOLCHAIN_TUPLE "${rumprun_tuple}")
 set_property(TARGET rumprun_bottomlevel_support PROPERTY RUMPRUN_BASEDIR "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj")
+
+set(RUMPRUN_TOOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj/rumptools/bin" CACHE INTERNAL "" FORCE)
+set(RUMPRUN_BASEDIR "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj" CACHE INTERNAL "" FORCE)
+set(RUMPRUN_TOOLS_PREFIX "${rumprun_sel4_arch}--netbsd" CACHE INTERNAL "" FORCE)
+set(RUMPRUN_TOOLCHAIN_PATH "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/rumprun/bin" CACHE INTERNAL "" FORCE)
