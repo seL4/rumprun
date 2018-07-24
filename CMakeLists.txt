@@ -105,7 +105,7 @@ string(APPEND CFLAGS_SEL4 " -I${CMAKE_CURRENT_SOURCE_DIR}/platform/sel4/include/
 # FILE_DEPS are files that get passed to DEPENDS of the internal custom_command definition
 # ENV_VARS are extra environment variables that get set when build-rr.sh is called
 function(CreateRumprunBuildCommand command_name command_description)
-    cmake_parse_arguments(PARSE_ARGV 2 RUMP_BUILD "PHONY" "TARGET_NAME" "RUMP_TARGETS;FILE_DEPS;ENV_VARS")
+    cmake_parse_arguments(PARSE_ARGV 2 RUMP_BUILD "PHONY" "TARGET_NAME" "RUMP_TARGETS;FILE_DEPS;ENV_VARS;OUTPUT_FILES")
     if (NOT "${RUMP_BUILD_UNPARSED_ARGUMENTS}" STREQUAL "")
         message(FATAL_ERROR "Unknown arguments to CreateRumprunBuildCommand")
     endif()
@@ -150,7 +150,7 @@ function(CreateRumprunBuildCommand command_name command_description)
 
     # Create custom command.  It deletes the PHONY stampfile if one exists, runs the rump command and then touches the output ${STAMP} file
     add_custom_command(
-        OUTPUT ${STAMP}
+        OUTPUT ${STAMP} ${RUMP_BUILD_OUTPUT_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ${TOUCHSTAMP_PHONY}
         COMMAND ${BUILD_RR_CMD_LINE}
