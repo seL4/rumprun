@@ -53,7 +53,7 @@ function(DeclareCustomCamkesLanguage bin config language_name)
     set(cl_tools_objcopy ${RUMPRUN_TOOLS_DIR}/${RUMPRUN_TOOLS_PREFIX}-objcopy)
     set(cl_rumprun_bake ${RUMPRUN_TOOLCHAIN_PATH}/rumprun-bake)
     foreach(sym IN LISTS LANG_PUBLIC_SYMBOLS)
-        set(cl_extra_public_symbols "${extra_public_symbols} -G ${sym}")
+        set(cl_extra_public_symbols "${cl_extra_public_symbols} -G ${sym}")
     endforeach()
     # Populate camkes_link.sh template with custom values.
     configure_file(${CAMKES_RUMPRUN_PATH}/camkes_link.sh.in ${CMAKE_CURRENT_BINARY_DIR}/${language_name}_camkes_link.sh @ONLY)
