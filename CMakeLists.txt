@@ -269,6 +269,6 @@ set(RUMPRUN_TOOLS_PREFIX "${rumprun_sel4_arch}--netbsd" CACHE INTERNAL "" FORCE)
 set(RUMPRUN_TOOLCHAIN_PATH "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/rumprun/bin" CACHE INTERNAL "" FORCE)
 
 add_library(rumprun_intermediate_file STATIC IMPORTED GLOBAL)
-target_link_libraries(rumprun_intermediate_file LINK_INTERFACE_LIBRARIES rumprun ${RUMPRUN_SEL4LIBS})
+target_link_libraries(rumprun_intermediate_file INTERFACE rumprun ${RUMPRUN_SEL4LIBS})
 set_property(TARGET rumprun_intermediate_file PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj/rumprun-intermediate.o")
 add_dependencies(rumprun_intermediate_file platformobj)
