@@ -1,0 +1,41 @@
+#!/bin/sh
+# Copyright 2018, Data61
+# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+# ABN 41 687 119 230.
+#
+# This software may be distributed and modified according to the terms of
+# the BSD 2-Clause license. Note that NO WARRANTY is provided.
+# See "LICENSE_BSD2.txt" for details.
+#
+# @TAG(DATA61_BSD)
+
+# @rumprun_binary_file@ Is the full path to the posix binary to be baked
+# @rumprunbake_config@ is the config to use when baking
+# @tools_gcc@ is the rumprun platform compiler
+# @tools_objcopy@ is the rumprun platform objcopy
+# @rumprun_bake@ is the rumprun-bake tool
+set -e
+
+
+nuketmpdir ()
+{
+
+    nukeme="${TMPDIR}"
+    TMPDIR=''
+    rm -rf ${nukeme}
+}
+
+# Extract the last variable from the arguments
+for last in "$@"; do true; done
+
+@cl_tools_gcc@ "$@"
+@cl_tools_objcopy@ -w -G "bmk_*" -G "rumpuser_*" -G "jsmn_*" -G __assert_fail \
+         -G rumprun_platform_rumpuser_init -G _start -G env -G _zf_log_write_d -G _zf_log_write \
+         -G _zf_log_output_lvl -G "rumpns_*" @cl_extra_public_symbols@ $last
+
+TMPDIR=$(mktemp -d /tmp/camkesrump-XXXXXX)
+trap nuketmpdir 0 INT TERM
+
+mkdir -p $PWD/rumprun/$(basename "${last}")_
+cp $last $TMPDIR/rumprun.o
+RUMPRUN_BASEDIR=$TMPDIR @cl_rumprun_bake@ @cl_rumprunbake_config@ $last @cl_rumprun_binary_file@
