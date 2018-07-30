@@ -98,8 +98,8 @@ mul64_32(uint64_t a, uint32_t b)
 uint64_t tsc_mult;
 static uint64_t tsc_base;
 
-void
-x86_initclocks(void)
+int
+arch_init_clocks(void)
 {
 
     uint64_t tsc_freq = env.custom_simple.timer_config.tsc_freq;
@@ -109,14 +109,11 @@ x86_initclocks(void)
     tsc_mult = (NSEC_PER_SEC << 32) / tsc_freq;
     time_base = mul64_32(tsc_base, tsc_mult);
 
-    return;
+    return 0;
 }
 
-/*
- * Return monotonic time since system boot in nanoseconds.
- */
 bmk_time_t
-bmk_platform_cpu_clock_monotonic(void)
+arch_cpu_clock_monotonic(void)
 {
     uint64_t tsc_now, tsc_delta;
 
@@ -131,60 +128,9 @@ bmk_platform_cpu_clock_monotonic(void)
     return time_base;
 }
 
-/*
- * Return epoch offset (wall time offset to monotonic clock start).
- */
 bmk_time_t
-bmk_platform_cpu_clock_epochoffset(void)
+arch_cpu_clock_epochoffset(void)
 {
 
     return rtc_epochoffset;
-}
-
-/*
- * Block the CPU until monotonic time is *no later than* the specified time.
- * Returns early if any interrupts are serviced, or if the requested delay is
- * too short.
- */
-//This is only called in schedule if there is no runnable thread.
-void
-bmk_platform_cpu_block(bmk_time_t until)
-{
-    bmk_time_t now, delta_ns;
-    bmk_assert(env.spldepth > 0);
-
-    /*
-     * Return if called too late.  Doing do ensures that the time
-     * delta is positive.
-     */
-    now = bmk_platform_cpu_clock_monotonic();
-    if (until <= now) {
-        return;
-    }
-
-    /*
-     * Compute delta in PIT ticks. Return if it is less than minimum safe
-     * amount of ticks.  Essentially this will cause us to spin until
-     * the timeout.
-     */
-    delta_ns = until - now;
-    int res;
-    if (is_ltimer(&env.custom_simple)) {
-        res = ltimer_set_timeout(&env.custom_simple.timer_config.ltimer.ltimer, delta_ns, TIMEOUT_RELATIVE);
-    } else {
-        res = env.custom_simple.timer_config.interface.oneshot_relative(0, delta_ns);
-    }
-    if (res != 0) {
-        bmk_platform_splx(0);
-        bmk_platform_splhigh();
-        return;
-    }
-
-    env.should_wakeup = 1;
-    bmk_platform_splx(0);
-    seL4_Wait(env.custom_simple.timer_config.timer_ntfn, NULL);
-
-    env.should_wakeup = 0;
-
-    bmk_platform_splhigh();
 }

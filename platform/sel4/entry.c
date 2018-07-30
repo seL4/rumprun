@@ -349,7 +349,8 @@ int init_rumprun(custom_simple_t *custom_simple)
     ZF_LOGF_IF(res != 0, "sel4utils_new_page_dma_alloc failed");
 #endif
 
-    x86_initclocks();
+    res = arch_init_clocks(&env);
+    ZF_LOGF_IF(res != 0, "failed to init clocks");
 
     bmk_sched_init();
     provide_vmem(&env);

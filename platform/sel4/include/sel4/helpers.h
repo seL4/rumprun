@@ -66,6 +66,9 @@ typedef struct env *env_t;
 
 extern struct env env;
 
-int arch_init_timer(env_t env);
-void x86_initclocks(void);
+
+int arch_init_clocks(env_t env);
+bmk_time_t arch_cpu_clock_monotonic(void);
+bmk_time_t arch_cpu_clock_epochoffset(void);
+
 void simple_init_rumprun(custom_simple_t *custom_simple, seL4_CPtr endpoint);
