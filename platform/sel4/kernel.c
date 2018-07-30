@@ -46,7 +46,7 @@
 void
 bmk_platform_cpu_sched_settls(struct bmk_tcb *next)
 {
-    env.tls_base_ptr = (void *) next->btcb_tp;
+    arch_cpu_sched_settls(&env, next->btcb_tp);
 }
 
 

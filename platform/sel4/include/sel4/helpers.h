@@ -66,6 +66,8 @@ typedef struct env *env_t;
 
 extern struct env env;
 
+int arch_init_tls(env_t env, seL4_Word *tls_base);
+void arch_cpu_sched_settls(env_t env, unsigned long btcb_tp);
 
 int arch_init_clocks(env_t env);
 bmk_time_t arch_cpu_clock_monotonic(void);

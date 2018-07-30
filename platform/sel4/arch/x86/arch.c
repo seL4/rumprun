@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <sel4platsupport/device.h>
 
-/* The below functions are implementations of the libsel4simple arch specific interface.
+/* The below 2 functions are implementations of the libsel4simple arch specific interface.
    See libsel4simple/arch_include/x86/simple/arch/simple.h for further documentation */
 static seL4_Error
 get_IOPort_cap(void *data, uint16_t start_port, uint16_t end_port, seL4_Word root, seL4_Word dest, seL4_Word depth)
@@ -33,4 +33,19 @@ arch_init_simple(simple_t *simple)
 {
     simple->arch_simple.IOPort_cap = get_IOPort_cap;
     simple->arch_simple.data = (void *) simple->data;
+}
+
+int arch_init_tls(env_t env, seL4_Word *tls_base)
+{
+    // For x86, we use a layer of indirection for the TLS base pointer.
+    // This allows us to avoid having to call the kernel every single time we change
+    // Rump threads.
+    return seL4_TCB_SetTLSBase(simple_get_tcb(&env->simple), tls_base);
+}
+
+void
+arch_cpu_sched_settls(env_t env, unsigned long btcb_tp)
+{
+    // Just update the pointer to point to the next TLS base
+    env.tls_base_ptr = (void *) btcb_tp;
 }
