@@ -36,6 +36,8 @@ elseif(KernelArchARM)
         # Suppress warnings that would otherwise stop the compilation
         list(APPEND RUMPKERNEL_FLAGS -F CWARNFLAGS=-w)
     endif()
+    # Append -march flag to ensure Rump is built properly for the specific CPU arch
+    list(APPEND RUMPKERNEL_FLAGS -F ACFLAGS='-march=${KernelArmArmV}')
 else()
     # Print a message alerting the user that only x86 and ARM (aarch32) architectures are supported.
     message(FATAL_ERROR "Only x86 and ARM (aarch32) architectures are supported for Rumprun.")
