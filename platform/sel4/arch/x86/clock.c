@@ -99,10 +99,10 @@ uint64_t tsc_mult;
 static uint64_t tsc_base;
 
 int
-arch_init_clocks(void)
+arch_init_clocks(env_t env)
 {
 
-    uint64_t tsc_freq = env.custom_simple.timer_config.tsc_freq;
+    uint64_t tsc_freq = env->custom_simple.timer_config.tsc_freq;
 
     tsc_base = rdtsc_pure();
 
