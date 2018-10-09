@@ -38,8 +38,15 @@ bmk_time_t
 arch_cpu_clock_monotonic(void)
 {
     bmk_time_t now = 0;
-    UNUSED int err = ltimer_get_time(&env.custom_simple.timer_config.ltimer.ltimer, (uint64_t *) &now);
-    return now; 
+
+    timer_config_t *simple_timer_config = &env.custom_simple.timer_config;
+    if (simple_timer_config->timer == TIMER_INTERFACE) {
+        now = simple_timer_config->interface.time();
+    } else {
+        UNUSED int err = ltimer_get_time(&simple_timer_config->ltimer.ltimer, (uint64_t *) &now);
+    }
+
+    return now;
 }
 
 bmk_time_t

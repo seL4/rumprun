@@ -48,6 +48,7 @@ typedef struct timer_config {
     union {
         struct {
             int (*oneshot_relative)(int tid, uint64_t ns);
+            uint64_t (*time)(void);
         } interface;
         struct {
             ltimer_t ltimer;
