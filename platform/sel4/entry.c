@@ -122,7 +122,7 @@ int rumpns_plat_mprotect(void *addr, size_t len, int prot) {
 
 
     /* remap with new rights */
-    seL4_CapRights_t rights = seL4_CapRights_new(false, prot & PROT_READ, prot & PROT_WRITE);
+    seL4_CapRights_t rights = seL4_CapRights_new(false, false, prot & PROT_READ, prot & PROT_WRITE);
     res = vspace_reserve_range_at(&env.vspace, addr, len, rights, true);
     ZF_LOGF_IF(res.res == 0, "Failed to reserve range we just unmapped!");
 
@@ -216,7 +216,7 @@ provide_vmem(env_t env)
         ZF_LOGF("Failed to set device_ram");
     }
 
-    osend = vspace_new_pages_with_config(&env->vspace, &config, seL4_CapRights_new(1, 1, 1));
+    osend = vspace_new_pages_with_config(&env->vspace, &config, seL4_AllRights);
     ZF_LOGF_IF(osend == NULL, "vspace returned null");
 
     ZF_LOGI("Starting paddr: %p\n", osend);
