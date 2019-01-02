@@ -27,7 +27,8 @@
     attribute int cnode_size_bits = 16; \
     attribute int simple = 1; \
     attribute int rump_priority = 100; \
-    attribute RumprunConfig rump_config;
+    attribute RumprunConfig rump_config; \
+    attribute int sched_ctrl = 0;
 
 #define RUMPRUN_COMPONENT_CONFIGURATION(instance, id) \
         instance.platform_timer_global_endpoint = VAR_STRINGIZE(instance); \
