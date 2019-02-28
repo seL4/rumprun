@@ -52,6 +52,7 @@ static char allocator_mem_pool[ALLOCATOR_STATIC_POOL_SIZE];
 /* Damn linker errors: This symbol is overrided by files_to_obj.sh it is included
     here to prevent 'undefined reference to `_cpio_archive`' linker errors */
 char _cpio_archive[1];
+char _cpio_archive_end[1];
 
 /* Environment global data */
 struct env env = {
