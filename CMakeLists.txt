@@ -192,10 +192,18 @@ endfunction()
 # We use a glob as it isn't practical to keep a full list of files up to date
 file(GLOB APP_TOOLS_FILES app-tools/*)
 file(GLOB_RECURSE SEL4_PLATFORM_FILES platform/sel4/*)
-file(GLOB_RECURSE RUMPRUN_LIB_FILES lib/*)
-file(GLOB_RECURSE RUMPRUN_INCLUDE_FILES include/*)
-file(GLOB_RECURSE SRC_NETBSD_FILES src-netbsd/*)
-file(GLOB_RECURSE BUILD_RR_FILES buildrump.sh/*)
+
+set(RUMPRUN_GLOB_NETBSD_SOURCES OFF CACHE BOOL
+    "This flag causes CMake to add lots of source files to its dependency lists
+     which noticeably slows down its configuration times (up to 4 times slower).
+     When not making changes in the rumprun directory, it is likely not necessary
+     to have this enabled.")
+if (RUMPRUN_GLOB_NETBSD_SOURCES)
+    file(GLOB_RECURSE RUMPRUN_LIB_FILES lib/*)
+    file(GLOB_RECURSE RUMPRUN_INCLUDE_FILES include/*)
+    file(GLOB_RECURSE SRC_NETBSD_FILES src-netbsd/*)
+    file(GLOB_RECURSE BUILD_RR_FILES buildrump.sh/*)
+endif()
 
 # Create rumprun build targets
 CreateRumprunBuildCommand(tools "Rump kernel tools"
