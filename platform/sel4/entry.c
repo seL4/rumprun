@@ -38,6 +38,7 @@
 #include <sel4utils/stack.h>
 #include <rumprun-base/rumprun.h>
 #include <sys/mman.h>
+#include <sel4runtime.h>
 
 /* global static memory for init */
 static sel4utils_alloc_data_t alloc_data;
@@ -325,11 +326,6 @@ int init_rumprun(custom_simple_t *custom_simple)
 
     ZF_LOGF_IF(res != 0, "sel4utils_start_thread(wait_for_pci_interrupt) failed");
 
-
-    /* Set up TLS for main thread. */
-    res = arch_init_tls(&env, (seL4_Word *)&env.tls_base_ptr);
-    ZF_LOGF_IF(res != 0, "failed to set TLS base pointer");
-
 #ifdef CONFIG_IOMMU
     seL4_CPtr io_space = simple_init_cap(&env.simple, seL4_CapIOSpace);
     res = sel4utils_make_iommu_dma_alloc(&env.vka, &env.vspace, &env.io_ops.dma_manager, 1, &io_space);
@@ -342,7 +338,6 @@ int init_rumprun(custom_simple_t *custom_simple)
     res = arch_init_clocks(&env);
     ZF_LOGF_IF(res != 0, "failed to init clocks");
 
-    bmk_sched_init();
     provide_vmem(&env);
     intr_init();
 

@@ -54,17 +54,6 @@ endif()
 if("${CMAKE_BUILD_TYPE}" IN_LIST "Release;MinSizeRel")
     list(APPEND RUMPKERNEL_FLAGS -r)
 endif()
-# Change TLS model to avoid unnecessary seL4 invocations. (Only x86 exclusive for now.)
-if(KernelArchX86)
-    list(
-        APPEND
-            RUMPKERNEL_FLAGS
-            -F
-            CFLAGS=-mno-tls-direct-seg-refs
-            -F
-            CFLAGS=-ftls-model=global-dynamic
-    )
-endif()
 
 # Ignore errors that cause compile to fail for GCC 8
 if(NOT "${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 8.0)
@@ -134,6 +123,7 @@ set(
 set(
     RUMPRUN_SEL4LIBS
     sel4
+    sel4runtime
     sel4muslcsys
     sel4allocman
     platsupport

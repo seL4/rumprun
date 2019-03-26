@@ -39,7 +39,6 @@ struct bmk_tcb {
 
 struct bmk_thread;
 
-void	bmk_sched_init(void);
 void	bmk_sched_startmain(void (*)(void *), void *) __attribute__((noreturn));
 
 void	bmk_sched_yield(void);
@@ -89,5 +88,6 @@ void	bmk_cpu_sched_bouncer(void);
 void	bmk_cpu_sched_switch(void *, void *);
 
 void	bmk_platform_cpu_sched_settls(struct bmk_tcb *);
+void	bmk_platform_cpu_sched_initcurrent(void *, struct bmk_thread *);
 
 #endif /* _BMK_CORE_SCHED_H_ */

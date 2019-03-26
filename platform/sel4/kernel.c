@@ -38,6 +38,7 @@
 #include <sel4utils/thread.h>
 #include <sel4/helpers.h>
 #include <sel4/kernel.h>
+#include <sel4runtime.h>
 
 #include <bmk-core/platform.h>
 #include <bmk-core/printf.h>
@@ -46,7 +47,24 @@
 void
 bmk_platform_cpu_sched_settls(struct bmk_tcb *next)
 {
-    arch_cpu_sched_settls(&env, next->btcb_tp);
+    arch_cpu_sched_settls(next->btcb_tp);
+}
+
+void
+bmk_platform_cpu_sched_initcurrent(
+    void *tlsarea,
+    struct bmk_thread *value
+) {
+    sel4runtime_set_tls_variable(
+        (uintptr_t)tlsarea,
+        bmk_current,
+        value
+    );
+    sel4runtime_set_tls_variable(
+        (uintptr_t)tlsarea,
+        __sel4_ipc_buffer,
+        __sel4_ipc_buffer
+    );
 }
 
 

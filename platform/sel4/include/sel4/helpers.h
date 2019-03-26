@@ -26,6 +26,7 @@
 #include <sel4/kernel.h>
 #include <sel4platsupport/pmem.h>
 #include <rumprun/custom_simple.h>
+#include <sel4runtime.h>
 
 struct env {
     /* An initialised vka that may be used by the test. */
@@ -66,8 +67,9 @@ typedef struct env *env_t;
 
 extern struct env env;
 
-int arch_init_tls(env_t env, seL4_Word *tls_base);
-void arch_cpu_sched_settls(env_t env, unsigned long btcb_tp);
+static inline void arch_cpu_sched_settls(unsigned long btcb_tp) {
+    sel4runtime_set_tls_base(btcb_tp);
+}
 
 int arch_init_clocks(env_t env);
 bmk_time_t arch_cpu_clock_monotonic(void);

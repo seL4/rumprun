@@ -429,13 +429,10 @@ inittcb(struct bmk_tcb *tcb, void *tlsarea, unsigned long tlssize)
 	tcb->btcb_tpsize = tlssize;
 }
 
-static long bmk_curoff;
 static void
 initcurrent(void *tcb, struct bmk_thread *value)
 {
-	struct bmk_thread **dst = (void *)((unsigned long)tcb + bmk_curoff);
-
-	*dst = value;
+	bmk_platform_cpu_sched_initcurrent(tcb, value);
 }
 
 struct bmk_thread *
@@ -643,39 +640,6 @@ bmk_sched_wake(struct bmk_thread *thread)
 
 	thread->bt_wakeup_time = BMK_SCHED_BLOCK_INFTIME;
 	set_runnable(thread);
-}
-
-/*
- * Calculate offset of bmk_current early, so that we can use it
- * in thread creation.  Attempt to not depend on allocating the
- * TLS area so that we don't have to have malloc initialized.
- * We will properly initialize TLS for the main thread later
- * when we start the main thread (which is not necessarily the
- * first thread that we create).
- */
-void
-bmk_sched_init(void)
-{
-	unsigned long tlsinit;
-	struct bmk_tcb tcbinit;
-
-	inittcb(&tcbinit, &tlsinit, 0);
-	bmk_platform_cpu_sched_settls(&tcbinit);
-
-	/*
-	 * Not sure if the membars are necessary, but better to be
-	 * Marvin the Paranoid Paradroid than get eaten by 999
-	 */
-	__asm__ __volatile__("" ::: "memory");
-	bmk_curoff = (unsigned long)&bmk_current - (unsigned long)&tlsinit;
-	__asm__ __volatile__("" ::: "memory");
-
-	/*
-	 * Set TLS back to 0 so that it's easier to catch someone trying
-	 * to use it until we get TLS really initialized.
-	 */
-	tcbinit.btcb_tp = 0;
-	bmk_platform_cpu_sched_settls(&tcbinit);
 }
 
 void __attribute__((noreturn))

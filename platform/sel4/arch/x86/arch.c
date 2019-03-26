@@ -34,18 +34,3 @@ arch_init_simple(simple_t *simple)
     simple->arch_simple.IOPort_cap = get_IOPort_cap;
     simple->arch_simple.data = (void *) simple->data;
 }
-
-int arch_init_tls(env_t env, seL4_Word *tls_base)
-{
-    // For x86, we use a layer of indirection for the TLS base pointer.
-    // This allows us to avoid having to call the kernel every single time we change
-    // Rump threads.
-    return seL4_TCB_SetTLSBase(simple_get_tcb(&env->simple), (seL4_Word) tls_base);
-}
-
-void
-arch_cpu_sched_settls(env_t env, unsigned long btcb_tp)
-{
-    // Just update the pointer to point to the next TLS base
-    env->tls_base_ptr = (void *) btcb_tp;
-}
