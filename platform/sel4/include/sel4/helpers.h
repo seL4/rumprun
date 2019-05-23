@@ -12,6 +12,7 @@
 
 #pragma once
 #include <autoconf.h>
+#include <rumprun/gen_config.h>
 #include <vka/vka.h>
 #include <vspace/vspace.h>
 #include <sel4utils/thread.h>

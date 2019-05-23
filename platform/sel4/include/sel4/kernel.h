@@ -16,6 +16,7 @@
 
 #include <bmk-core/types.h>
 #include <autoconf.h>
+#include <rumprun/gen_config.h>
 
 void cons_init(void);
 void cons_putc(int);

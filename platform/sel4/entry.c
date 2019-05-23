@@ -10,6 +10,7 @@
  * @TAG(DATA61_BSD)
  */
 #include <autoconf.h>
+#include <rumprun/gen_config.h>
 #include <sel4/sel4.h>
 #include <sel4/helpers.h>
 #include <stdlib.h>

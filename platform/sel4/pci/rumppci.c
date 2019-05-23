@@ -11,6 +11,7 @@
  */
 
 #include <autoconf.h>
+#include <rumprun/gen_config.h>
 #include <bmk-core/types.h>
 #include <sel4/kernel.h>
 #include <assert.h>

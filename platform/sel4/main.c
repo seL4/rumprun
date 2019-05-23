@@ -11,6 +11,7 @@
  */
 
 #include <autoconf.h>
+#include <rumprun/gen_config.h>
 
 #include <rumprun/init_data.h>
 #include <simple/simple.h>
