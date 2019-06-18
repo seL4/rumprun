@@ -100,8 +100,8 @@ set(RR_ENV_VARS PATH=$ENV{PATH}
     RUMP_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
     CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER})
 
-set(RUMPRUN_SEL4LIBS sel4 sel4muslcsys sel4vka sel4allocman platsupport sel4platsupport platsupport sel4vspace
-       sel4serialserver sel4test sel4utils sel4simple-default sel4simple sel4debug utils cpio elf)
+set(RUMPRUN_SEL4LIBS sel4 sel4muslcsys sel4allocman platsupport sel4platsupport platsupport
+       sel4serialserver sel4test sel4utils sel4vspace sel4vka sel4simple-default sel4simple sel4debug utils cpio elf)
 
 set(LDFLAGS_SEL4 "")
 set(CFLAGS_SEL4 "")
