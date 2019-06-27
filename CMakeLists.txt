@@ -66,6 +66,18 @@ if(KernelArchX86)
     )
 endif()
 
+# Ignore errors that cause compile to fail for GCC 8
+if(NOT "${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 8.0)
+    list(
+        APPEND
+            RUMPKERNEL_FLAGS
+            -F
+            CFLAGS='-Wno-cast-function-type
+            -Wno-packed-not-aligned
+            -Wno-tautological-compare'
+    )
+endif()
+
 set(configure_string "")
 config_string(RumprunTMPFSNumMiB RUMPRUN_TMPFS_NUM_MiB "Set this to the size of memory \
     you want to back the tmpfs at /tmp." DEFAULT 1 UNQUOTE)
