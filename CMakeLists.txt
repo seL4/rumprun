@@ -130,7 +130,7 @@ set(
     sel4platsupport
     platsupport
     sel4serialserver
-    sel4test
+    sel4sync
     sel4utils
     sel4vspace
     sel4vka
