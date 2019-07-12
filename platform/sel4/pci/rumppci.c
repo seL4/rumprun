@@ -47,8 +47,7 @@ static struct {
 } pci_data[BMK_MAXINTR];
 
 /* Wrappers to pass through to sel4 */
-int
-rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val)
+int rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val)
 {
     if (env.custom_simple.camkes) {
         ZF_LOGF("ERROR\n");
@@ -58,8 +57,7 @@ rumpcomp_pci_port_out(uint32_t port, int io_size, uint32_t val)
     return 0;
 }
 
-int
-rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result)
+int rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result)
 {
     if (env.custom_simple.camkes) {
         ZF_LOGF("ERROR\n");
@@ -70,8 +68,7 @@ rumpcomp_pci_port_in(uint32_t port, int io_size, uint32_t *result)
     return 0;
 }
 
-int
-rumpcomp_pci_intr_type(void)
+int rumpcomp_pci_intr_type(void)
 {
 #ifdef CONFIG_USE_MSI_ETH
     return 1; //PCI_INTR_TYPE_MSI;
@@ -81,22 +78,19 @@ rumpcomp_pci_intr_type(void)
 }
 
 /* Don't support iospace yet */
-int
-rumpcomp_pci_iospace_init(void)
+int rumpcomp_pci_iospace_init(void)
 {
     return 0;
 }
 
-static uint32_t
-makeaddr(unsigned bus, unsigned dev, unsigned fun, int reg)
+static uint32_t makeaddr(unsigned bus, unsigned dev, unsigned fun, int reg)
 {
 
     return (BIT(31)) | (bus << 16u) | (dev << 11u) | (fun << 8u) | (reg & 0xfc);
 }
 
-int
-rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun, int reg,
-                      unsigned int *value)
+int rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun, int reg,
+                          unsigned int *value)
 {
     uint32_t addr;
     unsigned int data;
@@ -106,7 +100,7 @@ rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun, int reg,
         *value =  env.custom_simple.pci_config_config.pci_config_read32(bus, dev, fun, reg);
         return 0;
     }
-    res = rumpcomp_pci_port_out( PCI_CONF_ADDR, 4, addr);
+    res = rumpcomp_pci_port_out(PCI_CONF_ADDR, 4, addr);
 
     if (res) {
         return res;
@@ -119,9 +113,8 @@ rumpcomp_pci_confread(unsigned bus, unsigned dev, unsigned fun, int reg,
     return res;
 }
 
-int
-rumpcomp_pci_confwrite(unsigned bus, unsigned dev, unsigned fun, int reg,
-                       unsigned int value)
+int rumpcomp_pci_confwrite(unsigned bus, unsigned dev, unsigned fun, int reg,
+                           unsigned int value)
 {
     uint32_t addr;
     int res;
@@ -136,7 +129,7 @@ rumpcomp_pci_confwrite(unsigned bus, unsigned dev, unsigned fun, int reg,
     if (res) {
         return res;
     }
-    res = rumpcomp_pci_port_out( PCI_CONF_DATA, 4, value);
+    res = rumpcomp_pci_port_out(PCI_CONF_DATA, 4, value);
 
     if (res) {
         return res;
@@ -147,9 +140,8 @@ rumpcomp_pci_confwrite(unsigned bus, unsigned dev, unsigned fun, int reg,
 /* map interrupts */
 /* TODO Refactor this section to better support different underlying platforms.
     Implement the arch_simple interface */
-int
-rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
-                     int intrline, unsigned cookie)
+int rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
+                         int intrline, unsigned cookie)
 {
     if (cookie > BMK_MAXINTR) {
         return BMK_EGENERIC;
@@ -162,8 +154,8 @@ rumpcomp_pci_irq_map(unsigned bus, unsigned device, unsigned fun,
     return 0;
 }
 
-int
-rumpcomp_pci_get_bdf(unsigned cookie, unsigned *bus, unsigned *dev, unsigned *function) {
+int rumpcomp_pci_get_bdf(unsigned cookie, unsigned *bus, unsigned *dev, unsigned *function)
+{
     if (cookie > BMK_MAXINTR) {
         return 1;
     }
@@ -175,8 +167,7 @@ rumpcomp_pci_get_bdf(unsigned cookie, unsigned *bus, unsigned *dev, unsigned *fu
 }
 
 /* Create interrupt and notification objects */
-void *
-rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
+void *rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 {
     if (env.caps[pci_data[cookie].intrs] == 0 && !env.custom_simple.camkes) {
         int error = vka_cspace_alloc(&env.vka, &env.caps[pci_data[cookie].intrs]);
@@ -201,10 +192,11 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
          */
 #elif defined CONFIG_IRQ_IOAPIC
         ps_irq_t irq = {0};
-        error = custom_irq_from_pci_device(&env.custom_simple, pci_data[cookie].bus, pci_data[cookie].dev, pci_data[cookie].function, &irq);
+        error = custom_irq_from_pci_device(&env.custom_simple, pci_data[cookie].bus, pci_data[cookie].dev,
+                                           pci_data[cookie].function, &irq);
         ZF_LOGF_IF(error == -1, "Failed to find IRQ number\n");
         error = seL4_IRQControl_GetIOAPIC(simple_get_irq_ctrl(&env.simple), path.root, path.capPtr,
-            path.capDepth, irq.ioapic.ioapic, irq.ioapic.pin, irq.ioapic.level, irq.ioapic.polarity, irq.ioapic.vector);
+                                          path.capDepth, irq.ioapic.ioapic, irq.ioapic.pin, irq.ioapic.level, irq.ioapic.polarity, irq.ioapic.vector);
         if (error != 0) {
             bmk_printf("Failed to get IOAPIC, error = %d\n", error);
         }
@@ -215,7 +207,8 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 
 #else /* using PIC */
 
-        error = seL4_IRQControl_Get(simple_get_irq_ctrl(&env.simple),  pci_data[cookie].intrs, path.root, path.capPtr, path.capDepth);
+        error = seL4_IRQControl_Get(simple_get_irq_ctrl(&env.simple),  pci_data[cookie].intrs, path.root, path.capPtr,
+                                    path.capDepth);
         ZF_LOGF_IF(error != 0, "Failed to get IRQControl\n");
         error = seL4_IRQHandler_Ack(env.caps[pci_data[cookie].intrs]);
         ZF_LOGF_IF(error != 0, "Failed to ack IRQ handler\n");
@@ -235,8 +228,7 @@ rumpcomp_pci_irq_establish(unsigned cookie, int (*handler)(void *), void *data)
 
 
 
-void *
-rumpcomp_pci_map(unsigned long addr, unsigned long len)
+void *rumpcomp_pci_map(unsigned long addr, unsigned long len)
 {
     ZF_LOGE("MAP: %lx, %ld", addr, len);
     void *vaddr = ps_io_map(&env.io_ops.io_mapper, addr, len, 0, PS_MEM_NORMAL);
@@ -254,8 +246,7 @@ rumpcomp_pci_map(unsigned long addr, unsigned long len)
     return vaddr;
 }
 
-void
-rumpcomp_pci_unmap(void *addr)
+void rumpcomp_pci_unmap(void *addr)
 {
     uint32_t len = 0;
 #ifdef TRACK_PCI_MAPPINGS

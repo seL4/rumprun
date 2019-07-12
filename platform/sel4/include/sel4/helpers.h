@@ -68,7 +68,8 @@ typedef struct env *env_t;
 
 extern struct env env;
 
-static inline void arch_cpu_sched_settls(unsigned long btcb_tp) {
+static inline void arch_cpu_sched_settls(unsigned long btcb_tp)
+{
     sel4runtime_set_tls_base(btcb_tp);
 }
 

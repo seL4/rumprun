@@ -39,6 +39,6 @@ extern volatile int spldepth;
 
 #include <bmk-core/errno.h>
 
-#define BMK_MAXINTR	32
+#define BMK_MAXINTR 32
 
 #define HZ 100

@@ -69,7 +69,8 @@ extern void *muslc_brk_reservation_start;
 sel4utils_res_t muslc_brk_reservation_memory;
 
 int rumpns_plat_mprotect(void *addr, size_t len, int prot);
-int rumpns_plat_mprotect(void *addr, size_t len, int prot) {
+int rumpns_plat_mprotect(void *addr, size_t len, int prot)
+{
 
     if (config_set(CONFIG_USE_LARGE_PAGES)) {
         /* benchmarks use large pages, remapping them as small pages in order
@@ -111,7 +112,7 @@ int rumpns_plat_mprotect(void *addr, size_t len, int prot) {
 
     /* get all the caps and check the mapping is valid */
     for (int i = 0; i < num_pages; i++) {
-        void *vaddr = (void *) (uint_addr + i * BMK_PCPU_PAGE_SIZE);
+        void *vaddr = (void *)(uint_addr + i * BMK_PCPU_PAGE_SIZE);
         caps[i] = vspace_get_cap(&env.vspace, vaddr);
         if (caps[i] == seL4_CapNull) {
             error = ENOMEM;
@@ -150,8 +151,7 @@ out:
     return error;
 }
 
-static void
-init_allocator(env_t env)
+static void init_allocator(env_t env)
 {
     UNUSED int error;
     UNUSED reservation_t virtual_reservation;
@@ -176,7 +176,8 @@ init_allocator(env_t env)
 
     error = custom_simple_vspace_bootstrap_frames(&env->custom_simple, &env->vspace, &alloc_data, &env->vka);
 
-    error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1, &muslc_brk_reservation_start);
+    error = sel4utils_reserve_range_no_alloc(&env->vspace, &muslc_brk_reservation_memory, 1048576, seL4_AllRights, 1,
+                                             &muslc_brk_reservation_start);
     ZF_LOGF_IF(error, "Failed to reserve_range");
     muslc_this_vspace = &env->vspace;
     muslc_brk_reservation.res = &muslc_brk_reservation_memory;
@@ -193,8 +194,7 @@ init_allocator(env_t env)
 
 }
 
-static void
-provide_vmem(env_t env)
+static void provide_vmem(env_t env)
 {
     void *osend;
 
@@ -209,7 +209,8 @@ provide_vmem(env_t env)
 
     env->rump_mapping_page_size_bits = page_size_bits;
     env->rump_mapping_page_type = kobject_get_type(KOBJECT_FRAME, page_size_bits);
-    ZF_LOGW_IF(rumprun_size % BIT(page_size_bits) != 0, "Warning: Memory size is being truncated by: 0x%zx", rumprun_size % BIT(page_size_bits));
+    ZF_LOGW_IF(rumprun_size % BIT(page_size_bits) != 0, "Warning: Memory size is being truncated by: 0x%zx",
+               rumprun_size % BIT(page_size_bits));
     size_t rumprun_pages = rumprun_size / BIT(page_size_bits);
     ZF_LOGI("num pages %zd with size: %d bits\n", rumprun_pages, page_size_bits);
     if (default_vspace_new_pages_config(rumprun_pages, page_size_bits, &config)) {
@@ -245,7 +246,7 @@ void rump_irq_handle(int intr, int soft_intr)
 
 }
 
-static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c)
+static void wait_for_pci_interrupt(void *UNUSED _a, void *UNUSED _b, void *UNUSED _c)
 {
     env.mask_the_mask = 0;
     while (1) {
@@ -255,14 +256,16 @@ static void wait_for_pci_interrupt(void * UNUSED _a, void * UNUSED _b, void * UN
     }
 }
 
-static int stdio_handler(void * UNUSED _a) {
+static int stdio_handler(void *UNUSED _a)
+{
     if (env.custom_simple.get_char_handler) {
         env.custom_simple.get_char_handler();
     }
     return 0;
 }
 
-static void wait_for_stdio_interrupt(void * UNUSED _a, void * UNUSED _b, void * UNUSED _c) {
+static void wait_for_stdio_interrupt(void *UNUSED _a, void *UNUSED _b, void *UNUSED _c)
+{
     int intr = bmk_isr_rumpkernel(stdio_handler, NULL, -1, SOFTWARE_EVENT);
     while (1) {
         seL4_Word sender_badge;
@@ -307,7 +310,7 @@ int init_rumprun(custom_simple_t *custom_simple)
     sync_bin_sem_init(&env.spl_semaphore, env.spl_notification.cptr, 1);
 
     sel4utils_thread_config_t thread_config = thread_config_default(&env.simple,
-        simple_get_cnode(&env.simple), seL4_NilData, seL4_CapNull, custom_get_priority(&env.custom_simple));
+                                                                    simple_get_cnode(&env.simple), seL4_NilData, seL4_CapNull, custom_get_priority(&env.custom_simple));
 
     res = sel4utils_configure_thread_config(&env.vka, &env.vspace, &env.vspace, thread_config, &env.pci_thread);
     ZF_LOGF_IF(res != 0, "Configure thread failed");

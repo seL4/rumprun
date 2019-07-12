@@ -154,8 +154,14 @@ endforeach()
 string(APPEND LDFLAGS_SEL4 " $<TARGET_PROPERTY:muslc_imported,IMPORTED_LOCATION>")
 string(APPEND CFLAGS_SEL4 " -I${CMAKE_CURRENT_SOURCE_DIR}/platform/sel4/include/sel4")
 
-string(APPEND CFLAGS_SEL4 " -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
-string(APPEND CFLAGS_SEL4 " -I$<JOIN:$<TARGET_PROPERTY:rumprun_Config,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
+string(
+    APPEND CFLAGS_SEL4
+    " -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>"
+)
+string(
+    APPEND CFLAGS_SEL4
+    " -I$<JOIN:$<TARGET_PROPERTY:rumprun_Config,INTERFACE_INCLUDE_DIRECTORIES>, -I>"
+)
 
 # Create a custom target that invokes a rumprun build command from ./build-rr.sh
 # command_name is the name of the command to run
@@ -480,7 +486,14 @@ set(
 )
 
 add_library(rumprun_intermediate_file STATIC IMPORTED GLOBAL)
-target_link_libraries(rumprun_intermediate_file INTERFACE rumprun ${RUMPRUN_SEL4LIBS} rumprun_Config kernel_autoconf)
+target_link_libraries(
+    rumprun_intermediate_file
+    INTERFACE
+        rumprun
+        ${RUMPRUN_SEL4LIBS}
+        rumprun_Config
+        kernel_autoconf
+)
 set_property(
     TARGET rumprun_intermediate_file
     PROPERTY

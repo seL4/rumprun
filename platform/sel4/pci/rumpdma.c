@@ -37,9 +37,8 @@ struct a_list {
 #define LIST_LENGTH 30
 a_list_t list[LIST_LENGTH];
 
-int
-rumpcomp_pci_dmalloc(size_t size, size_t align,
-                     unsigned long *pap, unsigned long *vap)
+int rumpcomp_pci_dmalloc(size_t size, size_t align,
+                         unsigned long *pap, unsigned long *vap)
 {
     /* alloc and pin using platsupport implementation */
     void *mem = ps_dma_alloc(&env.io_ops.dma_manager, size, align, 1, PS_MEM_NORMAL);
@@ -75,21 +74,19 @@ rumpcomp_pci_dmalloc(size_t size, size_t align,
 
 /* We already mapped in with call above ds_vacookie is *vap return from
     rumpcomp_pci_dmalloc. */
-int
-rumpcomp_pci_dmamem_map(struct rumpcomp_pci_dmaseg *dss, size_t nseg,
-                        size_t totlen, void **vap)
+int rumpcomp_pci_dmamem_map(struct rumpcomp_pci_dmaseg *dss, size_t nseg,
+                            size_t totlen, void **vap)
 {
     *vap = (void *)dss[0].ds_vacookie;
     return 0;
 }
 
-void
-rumpcomp_pci_dmafree(unsigned long mem, size_t size)
+void rumpcomp_pci_dmafree(unsigned long mem, size_t size)
 {
     /* Unpin and free from our platsupport impl */
     ps_dma_unpin(&env.io_ops.dma_manager, (void *)mem, size);
 
-    ps_dma_free(&env.io_ops.dma_manager, (void *)mem, size );
+    ps_dma_free(&env.io_ops.dma_manager, (void *)mem, size);
 
     /* Remove from our list */
     int i;
@@ -106,8 +103,7 @@ rumpcomp_pci_dmafree(unsigned long mem, size_t size)
     list[i].size = 0;
 }
 
-unsigned long
-rumpcomp_pci_virt_to_mach(void *virt)
+unsigned long rumpcomp_pci_virt_to_mach(void *virt)
 {
     /* Try and find if its from something we mapped in previously. */
     uintptr_t vin = (uintptr_t) virt;
@@ -122,6 +118,7 @@ rumpcomp_pci_virt_to_mach(void *virt)
     /* Couldn't find above, try and find in the system allocators */
     /* This likely means that the upper levels have an mbuf that was not allocated through rumpcomp_pci_dmalloc */
     /* Apparently this behavior is fine. */
-    uintptr_t paddr = (uintptr_t) vka_utspace_paddr(&env.vka, vspace_get_cookie(&env.vspace, virt), env.rump_mapping_page_type, env.rump_mapping_page_size_bits);
-    return paddr + (vin & MASK((unsigned int) env.rump_mapping_page_size_bits) );
+    uintptr_t paddr = (uintptr_t) vka_utspace_paddr(&env.vka, vspace_get_cookie(&env.vspace, virt),
+                                                    env.rump_mapping_page_type, env.rump_mapping_page_size_bits);
+    return paddr + (vin & MASK((unsigned int) env.rump_mapping_page_size_bits));
 }
