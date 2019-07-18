@@ -156,7 +156,7 @@ string(APPEND CFLAGS_SEL4 " -I${CMAKE_CURRENT_SOURCE_DIR}/platform/sel4/include/
 
 string(
     APPEND CFLAGS_SEL4
-    " -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>"
+    " -I$<JOIN:$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>"
 )
 string(
     APPEND CFLAGS_SEL4
@@ -492,7 +492,7 @@ target_link_libraries(
         rumprun
         ${RUMPRUN_SEL4LIBS}
         rumprun_Config
-        kernel_autoconf
+        sel4_autoconf
 )
 set_property(
     TARGET rumprun_intermediate_file
