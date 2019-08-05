@@ -288,7 +288,7 @@ int init_rumprun(custom_simple_t *custom_simple)
     cons_init();
 
 
-    int res = sel4platsupport_new_io_ops(env.vspace, env.vka, &env.io_ops);
+    int res = sel4platsupport_new_io_ops(&env.vspace, &env.vka, &env.simple, &env.io_ops);
     ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
 
 #ifdef CONFIG_ARCH_X86
