@@ -296,8 +296,6 @@ int init_rumprun(custom_simple_t *custom_simple)
     ZF_LOGF_IF(res != 0, "sel4platsupport_get_io_port_ops failed");
 #endif
 
-    sel4platsupport_new_malloc_ops(&env.io_ops.malloc_ops);
-
     if (is_ltimer(custom_simple)) {
         sel4utils_rpc_ltimer_init(&custom_simple->timer_config.ltimer.ltimer, env.io_ops,
                                   custom_simple->rpc_ep, TIMER_LABEL);
