@@ -30,8 +30,5 @@
     attribute RumprunConfig rump_config; \
     attribute int sched_ctrl = 0;
 
-#define RUMPRUN_COMPONENT_CONFIGURATION(instance, id) \
-        instance.platform_timer_global_endpoint = VAR_STRINGIZE(instance); \
-        instance.platform_timer_attributes = id + 2; \
-        instance.platform_putchar_attributes = id;
+#define RUMPRUN_COMPONENT_CONFIGURATION(instance, id)
 
