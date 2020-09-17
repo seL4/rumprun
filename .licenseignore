@@ -11,6 +11,7 @@ platform/makepseudolinkstubs.sh
 platform/sel4/platform.conf
 .travis*
 .gitmodules
+.gitignore
 gdbscripts
 global.mk
 README.md
