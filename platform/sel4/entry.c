@@ -182,7 +182,6 @@ static void init_allocator(env_t env)
     muslc_this_vspace = &env->vspace;
     muslc_brk_reservation.res = &muslc_brk_reservation_memory;
 
-
     /* switch the allocator to a virtual memory pool */
     void *vaddr;
     virtual_reservation = vspace_reserve_range(&env->vspace, ALLOCATOR_VIRTUAL_POOL_SIZE,
