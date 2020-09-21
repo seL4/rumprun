@@ -122,6 +122,7 @@ int custom_simple_vspace_bootstrap_frames(custom_simple_t *custom_simple, vspace
 int custom_get_num_regions(custom_simple_t *custom_simple);
 int custom_get_region_list(custom_simple_t *custom_simple, int num_regions, pmem_region_t *regions);
 void rump_irq_handle(int intr, int soft_intr);
+void preinit_rumprun(custom_simple_t *custom_simple);
 int init_rumprun(custom_simple_t *custom_simple);
 
 int custom_get_priority(custom_simple_t *custom_simple);

@@ -16,17 +16,25 @@
 #include <rumprun/init_data.h>
 #include <simple/simple.h>
 #include <utils/util.h>
+#include <utils/attribute.h>
 #include <sel4/helpers.h>
 #include <rumprun/custom_simple.h>
+#include <sel4runtime.h>
+#include <muslcsys/vsyscall.h>
 
 int init_rumprun(custom_simple_t *custom_simple);
 
-int main(int argc, char **argv)
+static void CONSTRUCTOR(MUSLCSYS_WITH_VSYSCALL_PRIORITY) pre_init(void)
 {
-
-    ZF_LOGF_IF(argc != 2, "Incorrect number of arguments passed");
-    seL4_CPtr endpoint = (seL4_CPtr) atoi(argv[1]);
+    ZF_LOGF_IF(sel4runtime_argc() != 2, "Incorrect number of arguments passed");
+    seL4_CPtr endpoint = (seL4_CPtr) atoi(sel4runtime_argv()[1]);
     env.custom_simple.simple = &env.simple;
     simple_init_rumprun(&env.custom_simple, endpoint);
+    preinit_rumprun(&env.custom_simple);
+    printf("Rumprun app initialised");
+}
+
+int main(int argc, char **argv)
+{
     return init_rumprun(&env.custom_simple);
 }

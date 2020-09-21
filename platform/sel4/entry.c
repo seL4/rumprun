@@ -274,7 +274,7 @@ static void wait_for_stdio_interrupt(void *UNUSED _a, void *UNUSED _b, void *UNU
     }
 }
 
-int init_rumprun(custom_simple_t *custom_simple)
+void preinit_rumprun(custom_simple_t *custom_simple)
 {
     if (custom_simple != &env.custom_simple) {
         env.custom_simple = *custom_simple;
@@ -286,8 +286,10 @@ int init_rumprun(custom_simple_t *custom_simple)
     /* initialse cspace, vspace and untyped memory allocation */
     init_allocator(&env);
     cons_init();
+}
 
-
+int init_rumprun(custom_simple_t *custom_simple)
+{
     int res = sel4platsupport_new_io_ops(&env.vspace, &env.vka, &env.simple, &env.io_ops);
     ZF_LOGF_IF(res != 0, "sel4platsupport_new_io_ops failed");
 
