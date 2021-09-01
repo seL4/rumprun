@@ -55,7 +55,7 @@ if("${CMAKE_BUILD_TYPE}" IN_LIST "Release;MinSizeRel")
     list(APPEND RUMPKERNEL_FLAGS -r)
 endif()
 
-# Ignore errors that cause compile to fail for GCC 8
+# Ignore errors that cause compile to fail for GCC 8 or above
 if(NOT "${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 8.0)
     list(
         APPEND
@@ -63,8 +63,14 @@ if(NOT "${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 8.0)
             -F
             CFLAGS='-Wno-cast-function-type
             -Wno-packed-not-aligned
-            -Wno-tautological-compare'
+            -Wno-tautological-compare
+            -fcommon'
     )
+    # Suppress warnings that would otherwise stop the compilation
+    list(APPEND RUMPKERNEL_FLAGS -F CWARNFLAGS=-w)
+
+    # Avoid linker errors when build tools are generated
+    set(host_cflags "-fcommon")
 endif()
 
 set(configure_string "")
@@ -118,6 +124,7 @@ set(
     RUMP_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
     CC=${CMAKE_C_COMPILER}
     CXX=${CMAKE_CXX_COMPILER}
+    HOST_CFLAGS=${host_cflags}
 )
 
 set(
