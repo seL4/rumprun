@@ -364,6 +364,8 @@ CreateRumprunBuildCommand(
     ${RUMPRUN_INCLUDE_FILES}
     ${RUMPRUN_SEL4LIBS}
     muslc
+    sel4_autoconf
+    rumprun_Config
     OUTPUT_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${rumprun_sel4_arch}/sel4-obj/rumprun-intermediate.o
 )
@@ -384,6 +386,8 @@ CreateRumprunBuildCommand(
     ${SRC_NETBSD_FILES}
     ${RUMPRUN_SEL4LIBS}
     muslc
+    sel4_autoconf
+    rumprun_Config
 )
 
 CreateRumprunBuildCommand(
@@ -413,6 +417,8 @@ CreateRumprunBuildCommand(
     ${SRC_NETBSD_FILES}
     ${RUMPRUN_SEL4LIBS}
     muslc
+    sel4_autoconf
+    rumprun_Config
 )
 
 # Install commands install artifacts to the rumprun install directory.  Top level is everything required to build rumprun applications
